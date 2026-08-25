@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Longblack.API/Longblack.API.csproj" DisplayName="Longblack.Api" />
+    <Project Path="src/Longblack.Application/Longblack.Application.csproj" Id="e98527e0-8be0-4eaf-8601-b387d8c8b33c" />
+    <Project Path="src/Longblack.Domain/Longblack.Domain.csproj" Id="4df2129f-4850-44ea-b1e6-dc8ad0a6c72d" />
+    <Project Path="src/Longblack.Infrastructure/Longblack.Infrastructure.csproj" Id="4d36f3f5-17c5-446c-a12e-85d6023e145b" />
+  </Folder>
+  <Folder Name="/tests/" />
+</Solution>
