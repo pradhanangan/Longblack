@@ -1,3 +1,4 @@
+using Longblack.Application.Catalogue.ProductVariants;
 using Longblack.Application.Catalogue.Products;
 using Longblack.Application.Common.Exceptions;
 using Longblack.Domain.Catalogue;
@@ -29,15 +30,19 @@ public class ProductService(AppDbContext db) : IProductService
         if (!string.IsNullOrWhiteSpace(filter.SearchQuery))
         {
             var q = filter.SearchQuery.ToLower();
-            query = query.Where(p =>
-                p.Name.ToLower().Contains(q) ||
-                p.ProductCode.ToLower().Contains(q));
+            query = query
+                .Include(p => p.Variants).ThenInclude(v => v.Colour)
+                .Include(p => p.Variants).ThenInclude(v => v.Size)
+                .Where(p =>
+                    p.Name.ToLower().Contains(q) ||
+                    p.ProductCode.ToLower().Contains(q) ||
+                    p.Variants.Any(v => v.Sku.ToLower().Contains(q) ||
+                                        (v.Barcode != null && v.Barcode.ToLower().Contains(q))));
         }
 
-        return await query
-            .OrderBy(p => p.Name)
-            .Select(p => ToDto(p))
-            .ToListAsync(ct);
+        var products = await query.OrderBy(p => p.Name).ToListAsync(ct);
+
+        return products.Select(p => ToDtoWithVariants(p, filter.SearchQuery)).ToList();
     }
 
     public async Task<ProductDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
@@ -135,6 +140,19 @@ public class ProductService(AppDbContext db) : IProductService
         await db.SaveChangesAsync(ct);
         return await GetByIdAsync(product.Id, ct) ?? ToDto(product);
     }
+
+    private static ProductDto ToDtoWithVariants(Product p, string? searchQuery) =>
+        ToDto(p) with
+        {
+            Variants = string.IsNullOrWhiteSpace(searchQuery)
+                ? null
+                : p.Variants.Select(v => new ProductVariantDto(
+                    v.Id, v.ProductId, v.Sku, v.Barcode,
+                    v.ColourId, v.Colour?.Name,
+                    v.SizeId, v.Size?.Name,
+                    v.SellingPrice, v.Status,
+                    v.CreatedAt, v.UpdatedAt, v.CreatedBy, v.UpdatedBy)).ToList()
+        };
 
     private static ProductDto ToDto(Product p) =>
         new(p.Id, p.ProductCode, p.Name, p.Description,

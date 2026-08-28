@@ -15,4 +15,5 @@ public class Product
     public DateTimeOffset UpdatedAt { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public string UpdatedBy { get; set; } = string.Empty;
+    public ICollection<ProductVariant> Variants { get; set; } = [];
 }

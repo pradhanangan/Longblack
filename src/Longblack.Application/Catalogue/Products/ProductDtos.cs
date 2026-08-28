@@ -1,3 +1,5 @@
+using Longblack.Application.Catalogue.ProductVariants;
+
 namespace Longblack.Application.Catalogue.Products;
 
 public record ProductDto(
@@ -13,7 +15,11 @@ public record ProductDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     string CreatedBy,
-    string UpdatedBy);
+    string UpdatedBy)
+{
+    // Populated only during search (q=) so the caller can identify which variant matched.
+    public IReadOnlyList<ProductVariantDto>? Variants { get; init; }
+}
 
 public record CreateProductDto(
     string ProductCode,

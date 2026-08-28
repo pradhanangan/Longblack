@@ -2,6 +2,7 @@ using Longblack.Application.Catalogue.Brands;
 using Longblack.Application.Catalogue.Categories;
 using Longblack.Application.Catalogue.Colours;
 using Longblack.Application.Catalogue.Products;
+using Longblack.Application.Catalogue.ProductVariants;
 using Longblack.Application.Catalogue.Sizes;
 using Longblack.Domain.Identity;
 using Longblack.Infrastructure.Catalogue;
@@ -37,6 +38,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IColourService, ColourService>();
         services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<IProductVariantService, ProductVariantService>();
         services.AddScoped<ISizeService, SizeService>();
 
         return services;

@@ -1,6 +1,6 @@
 # 05: ProductVariants and product search
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Blocked by:** 04 — Products
 

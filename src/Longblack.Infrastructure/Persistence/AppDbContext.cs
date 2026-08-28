@@ -12,6 +12,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Colour> Colours => Set<Colour>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
     public DbSet<Size> Sizes => Set<Size>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -109,6 +110,28 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(p => p.UpdatedBy).HasColumnName("updated_by").IsRequired();
             e.HasOne(p => p.Brand).WithMany().HasForeignKey(p => p.BrandId).IsRequired(false);
             e.HasOne(p => p.Category).WithMany().HasForeignKey(p => p.CategoryId).IsRequired(false);
+            e.HasMany(p => p.Variants).WithOne(v => v.Product).HasForeignKey(v => v.ProductId);
+        });
+
+        // ProductVariant
+        builder.Entity<ProductVariant>(e =>
+        {
+            e.ToTable("product_variants");
+            e.HasKey(v => v.Id);
+            e.Property(v => v.Id).HasColumnName("id");
+            e.Property(v => v.ProductId).HasColumnName("product_id");
+            e.Property(v => v.Sku).HasColumnName("sku").IsRequired();
+            e.Property(v => v.Barcode).HasColumnName("barcode");
+            e.Property(v => v.ColourId).HasColumnName("colour_id");
+            e.Property(v => v.SizeId).HasColumnName("size_id");
+            e.Property(v => v.SellingPrice).HasColumnName("selling_price").HasPrecision(10, 2);
+            e.Property(v => v.Status).HasColumnName("status").IsRequired();
+            e.Property(v => v.CreatedAt).HasColumnName("created_at");
+            e.Property(v => v.UpdatedAt).HasColumnName("updated_at");
+            e.Property(v => v.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(v => v.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasOne(v => v.Colour).WithMany().HasForeignKey(v => v.ColourId);
+            e.HasOne(v => v.Size).WithMany().HasForeignKey(v => v.SizeId);
         });
     }
 }
