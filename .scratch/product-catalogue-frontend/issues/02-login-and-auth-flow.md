@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 — Frontend foundation
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] `/login` renders an MUI-styled form with Email and Password fields
 - [ ] Form validated with Zod: both fields required, email must be a valid email format
