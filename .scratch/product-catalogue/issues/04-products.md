@@ -1,6 +1,6 @@
 # 04: Products
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Blocked by:** 02 — Reference data (Brands, Colours, Sizes), 03 — Reference data (Categories)
 
