@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 — Login and auth flow
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] `/products` page renders an MUI table of Products with columns: Product Code, Name, Brand, Category, Status
 - [ ] Filter bar includes: text search input (`q=`), Brand dropdown (from `GET /api/brands`), Category dropdown (from `GET /api/categories`), Status select (Active / Inactive / All — defaults to Active)
