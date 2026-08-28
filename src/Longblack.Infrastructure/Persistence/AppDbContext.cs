@@ -9,6 +9,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     : IdentityDbContext<AppUser>(options)
 {
     public DbSet<Brand> Brands => Set<Brand>();
+    public DbSet<Category> Categories => Set<Category>();
     public DbSet<Colour> Colours => Set<Colour>();
     public DbSet<Size> Sizes => Set<Size>();
 
@@ -37,6 +38,25 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(b => b.UpdatedAt).HasColumnName("updated_at");
             e.Property(b => b.CreatedBy).HasColumnName("created_by").IsRequired();
             e.Property(b => b.UpdatedBy).HasColumnName("updated_by").IsRequired();
+        });
+
+        // Category (self-referential hierarchy)
+        builder.Entity<Category>(e =>
+        {
+            e.ToTable("categories");
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Id).HasColumnName("id");
+            e.Property(c => c.ParentCategoryId).HasColumnName("parent_category_id");
+            e.Property(c => c.Name).HasColumnName("name").IsRequired();
+            e.Property(c => c.Status).HasColumnName("status").IsRequired();
+            e.Property(c => c.CreatedAt).HasColumnName("created_at");
+            e.Property(c => c.UpdatedAt).HasColumnName("updated_at");
+            e.Property(c => c.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(c => c.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasOne(c => c.ParentCategory)
+             .WithMany()
+             .HasForeignKey(c => c.ParentCategoryId)
+             .IsRequired(false);
         });
 
         // Colour

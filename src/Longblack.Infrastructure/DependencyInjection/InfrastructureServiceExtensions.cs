@@ -1,4 +1,5 @@
 using Longblack.Application.Catalogue.Brands;
+using Longblack.Application.Catalogue.Categories;
 using Longblack.Application.Catalogue.Colours;
 using Longblack.Application.Catalogue.Sizes;
 using Longblack.Domain.Identity;
@@ -32,6 +33,7 @@ public static class InfrastructureServiceExtensions
             .AddDefaultTokenProviders();
 
         services.AddScoped<IBrandService, BrandService>();
+        services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IColourService, ColourService>();
         services.AddScoped<ISizeService, SizeService>();
 

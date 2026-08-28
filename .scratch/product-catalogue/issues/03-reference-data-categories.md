@@ -1,6 +1,6 @@
 # 03: Reference data — Categories
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Blocked by:** 01 — SQL schema and seed data scripts
 

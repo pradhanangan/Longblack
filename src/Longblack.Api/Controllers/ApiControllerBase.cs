@@ -14,6 +14,7 @@ public abstract class ApiControllerBase : ControllerBase
     {
         NotFoundException nfe => NotFound(new { message = nfe.Message }),
         DuplicateException de => Conflict(new { message = de.Message }),
+        InvalidReferenceException ire => UnprocessableEntity(new { message = ire.Message }),
         _ => StatusCode(500, new { message = "An unexpected error occurred." })
     };
 }
