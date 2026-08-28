@@ -13,11 +13,15 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { ProductDto, ProductVariantDto } from '../api/types'
+import { ConfirmDialog } from '../components/products/ConfirmDialog'
+import { ProductFormDialog } from '../components/products/ProductFormDialog'
 import { useAuth } from '../contexts/AuthContext'
+import { useSnackbar } from '../contexts/SnackbarContext'
 
 function useProduct(id: string) {
   return useQuery<ProductDto>({
@@ -36,10 +40,25 @@ function useVariants(productId: string) {
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
+  const { showSuccess, showError } = useSnackbar()
+  const queryClient = useQueryClient()
   const canWrite = user?.roles.some((r) => r === 'Manager' || r === 'Admin') ?? false
+
+  const [editOpen, setEditOpen] = useState(false)
+  const [deactivateOpen, setDeactivateOpen] = useState(false)
 
   const { data: product, isLoading: productLoading, isError: productError } = useProduct(id!)
   const { data: variants, isLoading: variantsLoading, isError: variantsError } = useVariants(id!)
+
+  const statusMutation = useMutation({
+    mutationFn: (status: string) =>
+      api.patch(`/api/products/${id}/status`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      showSuccess('Product status updated.')
+    },
+    onError: (err: unknown) => showError((err as Error).message ?? 'Failed to update status.'),
+  })
 
   if (productLoading) return <CircularProgress />
   if (productError || !product) return <Typography color="error">Product not found.</Typography>
@@ -71,17 +90,31 @@ export function ProductDetailPage() {
         <Typography>{product.categoryName ?? '—'}</Typography>
       </Box>
 
-      {/* Action buttons (stubbed) */}
+      {/* Action buttons */}
       {canWrite && (
         <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-          <Button variant="outlined" disabled>Edit Product</Button>
+          <Button variant="outlined" onClick={() => setEditOpen(true)}>Edit Product</Button>
           {product.status === 'Active' ? (
-            <Button variant="outlined" color="warning" disabled>Deactivate</Button>
+            <Button variant="outlined" color="warning" onClick={() => setDeactivateOpen(true)}>
+              Deactivate
+            </Button>
           ) : (
-            <Button variant="outlined" color="success" disabled>Reactivate</Button>
+            <Button variant="outlined" color="success" onClick={() => statusMutation.mutate('Active')}>
+              Reactivate
+            </Button>
           )}
         </Box>
       )}
+
+      <ProductFormDialog open={editOpen} onClose={() => setEditOpen(false)} product={product} />
+      <ConfirmDialog
+        open={deactivateOpen}
+        onClose={() => setDeactivateOpen(false)}
+        title="Deactivate Product"
+        message={`Are you sure you want to deactivate "${product.name}"?`}
+        confirmLabel="Deactivate"
+        onConfirm={() => statusMutation.mutate('Inactive')}
+      />
 
       <Divider sx={{ my: 3 }} />
 

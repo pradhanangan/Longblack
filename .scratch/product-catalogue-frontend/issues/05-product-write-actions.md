@@ -4,7 +4,7 @@
 
 **Blocked by:** 04 — Product detail page
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] "Add Product" button on the list page opens an MUI Dialog with a form: Product Code, Name, Description (optional), Brand (dropdown), Category (dropdown)
 - [ ] "Edit Product" button on the detail page opens the same form pre-filled; Product Code field is read-only

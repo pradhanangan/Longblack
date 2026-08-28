@@ -21,6 +21,7 @@ import { useDeferredValue, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import type { BrandDto, CategoryDto, ProductDto } from '../api/types'
+import { ProductFormDialog } from '../components/products/ProductFormDialog'
 import { useAuth } from '../contexts/AuthContext'
 
 function useProducts(q: string, brandId: string, categoryId: string, status: string) {
@@ -61,6 +62,8 @@ export function ProductListPage() {
   const [categoryId, setCategoryId] = useState('')
   const [status, setStatus] = useState('Active')
 
+  const [addOpen, setAddOpen] = useState(false)
+
   const deferredSearch = useDeferredValue(searchInput)
 
   const { data: products, isLoading, isError } = useProducts(deferredSearch, brandId, categoryId, status)
@@ -72,11 +75,13 @@ export function ProductListPage() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h5">Products</Typography>
         {canWrite && (
-          <Button variant="contained" startIcon={<AddIcon />} disabled>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)}>
             Add Product
           </Button>
         )}
       </Box>
+
+      <ProductFormDialog open={addOpen} onClose={() => setAddOpen(false)} />
 
       {/* Filter bar */}
       <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
