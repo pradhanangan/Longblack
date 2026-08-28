@@ -4,7 +4,7 @@
 
 **Blocked by:** 03 — Product list page
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] `/products/:id` fetches and displays: Product Code (read-only label), Name, Description, Brand name, Category name, Status
 - [ ] A Variants section lists each ProductVariant with columns: SKU, Barcode, Colour, Size, Selling Price, Status
