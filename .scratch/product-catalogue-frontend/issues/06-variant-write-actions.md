@@ -4,7 +4,7 @@
 
 **Blocked by:** 05 — Add, Edit, Deactivate, and Reactivate Product
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] "Add Variant" button on the product detail page opens an MUI Dialog with a form: SKU, Barcode (optional), Colour (dropdown from `GET /api/colours`), Size (dropdown from `GET /api/sizes`), Selling Price
 - [ ] "Edit Variant" row action opens the same form pre-filled; SKU field is read-only
