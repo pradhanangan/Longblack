@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 — Add Code field to Brands and Categories
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] New endpoint: `POST /api/products/{id}/variants/batch` — accessible to Manager and Admin roles
 - [ ] Request body is an array of variant objects, each with: `sku`, `barcode` (optional), `colourId`, `sizeId`, `sellingPrice`

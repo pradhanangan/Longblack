@@ -74,6 +74,25 @@ public class ProductVariantsController(IProductVariantService variantService) : 
         }
     }
 
+    [HttpPost("batch")]
+    [Authorize(Roles = "Manager,Admin")]
+    public async Task<IActionResult> CreateBatch(Guid productId, [FromBody] List<CreateProductVariantRequest> requests, CancellationToken ct)
+    {
+        if (requests.Count == 0)
+            return BadRequest(new { message = "Batch must contain at least one variant." });
+        try
+        {
+            var dtos = requests.Select(r =>
+                new CreateProductVariantDto(r.Sku, r.Barcode, r.ColourId, r.SizeId, r.SellingPrice)).ToList();
+            var variants = await variantService.CreateBatchAsync(productId, dtos, CurrentUser, ct);
+            return StatusCode(201, variants.Select(ToResponse));
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
     private static ProductVariantResponse ToResponse(ProductVariantDto dto) =>
         new(dto.Id, dto.ProductId, dto.Sku, dto.Barcode,
             dto.ColourId, dto.ColourName, dto.SizeId, dto.SizeName,

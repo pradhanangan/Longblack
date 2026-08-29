@@ -145,4 +145,89 @@ public class ProductVariantService(AppDbContext db) : IProductVariantService
             v.SizeId, v.Size?.Name,
             v.SellingPrice, v.Status,
             v.CreatedAt, v.UpdatedAt, v.CreatedBy, v.UpdatedBy);
+
+    public async Task<IReadOnlyList<ProductVariantDto>> CreateBatchAsync(
+        Guid productId,
+        IReadOnlyList<CreateProductVariantDto> dtos,
+        string createdBy,
+        CancellationToken ct = default)
+    {
+        if (dtos.Count == 0)
+            throw new ArgumentException("Batch must contain at least one variant.", nameof(dtos));
+
+        var product = await db.Products.FindAsync([productId], ct)
+            ?? throw new NotFoundException(nameof(Product), productId);
+
+        if (product.Status != ReferenceDataStatus.Active)
+            throw new InvalidReferenceException(nameof(Product), "status", "inactive");
+
+        // Validate all reference FKs and collect conflicts before inserting anything
+        var batchSkus = dtos.Select(d => d.Sku).ToList();
+        var existingSkus = await db.ProductVariants
+            .Where(v => batchSkus.Contains(v.Sku))
+            .Select(v => v.Sku)
+            .ToListAsync(ct);
+
+        var batchBarcodes = dtos.Where(d => d.Barcode is not null).Select(d => d.Barcode!).ToList();
+        var existingBarcodes = batchBarcodes.Count > 0
+            ? await db.ProductVariants
+                .Where(v => v.Barcode != null && batchBarcodes.Contains(v.Barcode))
+                .Select(v => v.Barcode!)
+                .ToListAsync(ct)
+            : [];
+
+        var conflictingSkus = existingSkus
+            .Concat(dtos
+                .Where(d => d.Barcode is not null && existingBarcodes.Contains(d.Barcode!))
+                .Select(d => d.Sku))
+            .Distinct()
+            .ToList();
+
+        if (conflictingSkus.Count > 0)
+            throw new BatchConflictException(conflictingSkus);
+
+        var colourIds = dtos.Select(d => d.ColourId).Distinct().ToList();
+        var sizeIds = dtos.Select(d => d.SizeId).Distinct().ToList();
+
+        var validColourIds = await db.Colours.Where(c => colourIds.Contains(c.Id)).Select(c => c.Id).ToListAsync(ct);
+        var validSizeIds = await db.Sizes.Where(s => sizeIds.Contains(s.Id)).Select(s => s.Id).ToListAsync(ct);
+
+        var invalidColour = colourIds.FirstOrDefault(id => !validColourIds.Contains(id));
+        if (invalidColour != default)
+            throw new InvalidReferenceException(nameof(Colour), "colourId", invalidColour);
+
+        var invalidSize = sizeIds.FirstOrDefault(id => !validSizeIds.Contains(id));
+        if (invalidSize != default)
+            throw new InvalidReferenceException(nameof(Size), "sizeId", invalidSize);
+
+        var now = DateTimeOffset.UtcNow;
+        var variants = dtos.Select(dto => new ProductVariant
+        {
+            Id = Guid.NewGuid(),
+            ProductId = productId,
+            Sku = dto.Sku,
+            Barcode = dto.Barcode,
+            ColourId = dto.ColourId,
+            SizeId = dto.SizeId,
+            SellingPrice = dto.SellingPrice,
+            Status = ReferenceDataStatus.Active,
+            CreatedAt = now,
+            UpdatedAt = now,
+            CreatedBy = createdBy,
+            UpdatedBy = createdBy
+        }).ToList();
+
+        db.ProductVariants.AddRange(variants);
+        await db.SaveChangesAsync(ct);
+
+        // Reload with navigation props
+        var ids = variants.Select(v => v.Id).ToList();
+        var created = await db.ProductVariants
+            .Include(v => v.Colour)
+            .Include(v => v.Size)
+            .Where(v => ids.Contains(v.Id))
+            .ToListAsync(ct);
+
+        return created.Select(ToDto).ToList();
+    }
 }
