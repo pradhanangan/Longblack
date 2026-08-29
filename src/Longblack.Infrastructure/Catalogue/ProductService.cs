@@ -141,6 +141,26 @@ public class ProductService(AppDbContext db) : IProductService
         return await GetByIdAsync(product.Id, ct) ?? ToDto(product);
     }
 
+    public async Task<string> SuggestCodeAsync(Guid? brandId, Guid? categoryId, CancellationToken ct = default)
+    {
+        if (brandId is null || categoryId is null)
+            return string.Empty;
+
+        var brand = await db.Brands.FindAsync([brandId], ct);
+        var category = await db.Categories.FindAsync([categoryId], ct);
+
+        if (brand is null || category is null ||
+            string.IsNullOrWhiteSpace(brand.Code) ||
+            string.IsNullOrWhiteSpace(category.Code))
+            return string.Empty;
+
+        var count = await db.Products.CountAsync(
+            p => p.BrandId == brandId && p.CategoryId == categoryId, ct);
+
+        var sequence = (count + 1).ToString("D3");
+        return $"{brand.Code}-{category.Code}-{sequence}";
+    }
+
     private static ProductDto ToDtoWithVariants(Product p, string? searchQuery) =>
         ToDto(p) with
         {

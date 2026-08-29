@@ -21,6 +21,16 @@ public class ProductsController(IProductService productService) : ApiControllerB
         return Ok(products.Select(ToResponse));
     }
 
+    [HttpGet("suggest-code")]
+    public async Task<IActionResult> SuggestCode(
+        [FromQuery] Guid? brandId,
+        [FromQuery] Guid? categoryId,
+        CancellationToken ct)
+    {
+        var code = await productService.SuggestCodeAsync(brandId, categoryId, ct);
+        return Ok(new { suggestedCode = code });
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {

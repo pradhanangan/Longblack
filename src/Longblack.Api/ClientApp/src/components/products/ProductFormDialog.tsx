@@ -15,7 +15,7 @@ import {
 } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { api } from '../../api/client'
 import type { BrandDto, CategoryDto, ProductDto } from '../../api/types'
@@ -59,9 +59,30 @@ export function ProductFormDialog({ open, onClose, product }: Props) {
     handleSubmit,
     control,
     reset,
+    setValue,
+    getValues,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
+
+  const watchedBrandId = useWatch({ control, name: 'brandId' })
+  const watchedCategoryId = useWatch({ control, name: 'categoryId' })
+
+  // Fetch suggestion whenever brand+category changes (Add mode only)
+  const { data: suggestion } = useQuery<{ suggestedCode: string }>({
+    queryKey: ['products', 'suggest-code', watchedBrandId, watchedCategoryId],
+    queryFn: () => api.get(`/api/products/suggest-code?brandId=${watchedBrandId}&categoryId=${watchedCategoryId}`),
+    enabled: !isEdit && !!watchedBrandId && !!watchedCategoryId,
+    staleTime: 0,
+  })
+
+  // Pre-fill productCode only when field is still empty
+  useEffect(() => {
+    if (!isEdit && suggestion?.suggestedCode) {
+      const current = getValues('productCode')
+      if (!current) setValue('productCode', suggestion.suggestedCode)
+    }
+  }, [suggestion, isEdit, getValues, setValue])
 
   useEffect(() => {
     if (open) {

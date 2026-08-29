@@ -7,4 +7,5 @@ public interface IProductService
     Task<ProductDto> CreateAsync(CreateProductDto dto, string createdBy, CancellationToken ct = default);
     Task<ProductDto> UpdateAsync(Guid id, UpdateProductDto dto, string updatedBy, CancellationToken ct = default);
     Task<ProductDto> SetStatusAsync(Guid id, string status, string updatedBy, CancellationToken ct = default);
+    Task<string> SuggestCodeAsync(Guid? brandId, Guid? categoryId, CancellationToken ct = default);
 }

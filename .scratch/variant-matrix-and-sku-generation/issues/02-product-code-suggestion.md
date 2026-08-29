@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 — Add Code field to Brands and Categories
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] New API endpoint: `GET /api/products/suggest-code?brandId={id}&categoryId={id}` — returns `{ "suggestedCode": "NIKE-TS-003" }` for authenticated users of any role
 - [ ] Endpoint counts existing products with the given brand + category and computes the next zero-padded sequence number (e.g. 3 existing → suggest `004`)
