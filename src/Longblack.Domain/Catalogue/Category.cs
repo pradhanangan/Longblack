@@ -6,6 +6,7 @@ public class Category
     public Guid? ParentCategoryId { get; set; }
     public Category? ParentCategory { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
     public string Status { get; set; } = ReferenceDataStatus.Active;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }

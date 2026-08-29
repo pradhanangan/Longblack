@@ -30,7 +30,7 @@ public class CategoriesController(ICategoryService categoryService) : ApiControl
         try
         {
             var category = await categoryService.CreateAsync(
-                new CreateCategoryDto(request.Name, request.ParentCategoryId), CurrentUser, ct);
+                new CreateCategoryDto(request.Name, request.Code, request.ParentCategoryId), CurrentUser, ct);
             return CreatedAtAction(nameof(GetById), new { id = category.Id }, ToResponse(category));
         }
         catch (Exception ex)
@@ -46,7 +46,7 @@ public class CategoriesController(ICategoryService categoryService) : ApiControl
         try
         {
             var category = await categoryService.UpdateAsync(
-                id, new UpdateCategoryDto(request.Name, request.ParentCategoryId), CurrentUser, ct);
+                id, new UpdateCategoryDto(request.Name, request.Code, request.ParentCategoryId), CurrentUser, ct);
             return Ok(ToResponse(category));
         }
         catch (Exception ex)
@@ -71,5 +71,5 @@ public class CategoriesController(ICategoryService categoryService) : ApiControl
     }
 
     private static CategoryResponse ToResponse(CategoryDto dto) =>
-        new(dto.Id, dto.ParentCategoryId, dto.Name, dto.Status, dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy);
+        new(dto.Id, dto.ParentCategoryId, dto.Name, dto.Code, dto.Status, dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy);
 }

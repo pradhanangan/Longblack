@@ -42,12 +42,17 @@ public class CategoryService(AppDbContext db) : ICategoryService
         if (duplicate)
             throw new DuplicateException(nameof(Category), "name", dto.Name);
 
+        var codeDuplicate = await db.Categories.AnyAsync(c => c.Code == dto.Code, ct);
+        if (codeDuplicate)
+            throw new DuplicateException(nameof(Category), "code", dto.Code);
+
         var now = DateTimeOffset.UtcNow;
         var category = new Category
         {
             Id = Guid.NewGuid(),
             ParentCategoryId = dto.ParentCategoryId,
             Name = dto.Name,
+            Code = dto.Code,
             Status = ReferenceDataStatus.Active,
             CreatedAt = now,
             UpdatedAt = now,
@@ -76,7 +81,12 @@ public class CategoryService(AppDbContext db) : ICategoryService
         if (duplicate)
             throw new DuplicateException(nameof(Category), "name", dto.Name);
 
+        var codeDuplicate = await db.Categories.AnyAsync(c => c.Code == dto.Code && c.Id != id, ct);
+        if (codeDuplicate)
+            throw new DuplicateException(nameof(Category), "code", dto.Code);
+
         category.Name = dto.Name;
+        category.Code = dto.Code;
         category.ParentCategoryId = dto.ParentCategoryId;
         category.UpdatedAt = DateTimeOffset.UtcNow;
         category.UpdatedBy = updatedBy;
@@ -99,5 +109,5 @@ public class CategoryService(AppDbContext db) : ICategoryService
     }
 
     private static CategoryDto ToDto(Category c) =>
-        new(c.Id, c.ParentCategoryId, c.Name, c.Status, c.CreatedAt, c.UpdatedAt, c.CreatedBy, c.UpdatedBy);
+        new(c.Id, c.ParentCategoryId, c.Name, c.Code, c.Status, c.CreatedAt, c.UpdatedAt, c.CreatedBy, c.UpdatedBy);
 }

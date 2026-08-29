@@ -35,6 +35,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.HasKey(b => b.Id);
             e.Property(b => b.Id).HasColumnName("id");
             e.Property(b => b.Name).HasColumnName("name").IsRequired();
+            e.Property(b => b.Code).HasColumnName("code").IsRequired();
             e.Property(b => b.Status).HasColumnName("status").IsRequired();
             e.Property(b => b.CreatedAt).HasColumnName("created_at");
             e.Property(b => b.UpdatedAt).HasColumnName("updated_at");
@@ -50,6 +51,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(c => c.Id).HasColumnName("id");
             e.Property(c => c.ParentCategoryId).HasColumnName("parent_category_id");
             e.Property(c => c.Name).HasColumnName("name").IsRequired();
+            e.Property(c => c.Code).HasColumnName("code").IsRequired();
             e.Property(c => c.Status).HasColumnName("status").IsRequired();
             e.Property(c => c.CreatedAt).HasColumnName("created_at");
             e.Property(c => c.UpdatedAt).HasColumnName("updated_at");

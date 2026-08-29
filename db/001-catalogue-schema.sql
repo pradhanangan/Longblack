@@ -17,12 +17,23 @@
 CREATE TABLE IF NOT EXISTS brands (
     id          uuid        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     name        text        NOT NULL,
+    code        text        NOT NULL,
     status      text        NOT NULL,
     created_at  timestamptz NOT NULL DEFAULT now(),
     updated_at  timestamptz NOT NULL DEFAULT now(),
     created_by  text        NOT NULL,
     updated_by  text        NOT NULL
 );
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'uq_brands_code'
+    ) THEN
+        ALTER TABLE brands ADD CONSTRAINT uq_brands_code UNIQUE (code);
+    END IF;
+END
+$$;
 
 -- ---------------------------------------------------------------------------
 -- categories (self-referential hierarchy, unlimited depth)
@@ -31,12 +42,23 @@ CREATE TABLE IF NOT EXISTS categories (
     id                  uuid        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     parent_category_id  uuid        REFERENCES categories (id),
     name                text        NOT NULL,
+    code                text        NOT NULL,
     status              text        NOT NULL,
     created_at          timestamptz NOT NULL DEFAULT now(),
     updated_at          timestamptz NOT NULL DEFAULT now(),
     created_by          text        NOT NULL,
     updated_by          text        NOT NULL
 );
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'uq_categories_code'
+    ) THEN
+        ALTER TABLE categories ADD CONSTRAINT uq_categories_code UNIQUE (code);
+    END IF;
+END
+$$;
 
 -- ---------------------------------------------------------------------------
 -- colours

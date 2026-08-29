@@ -1,6 +1,7 @@
 export interface BrandDto {
   id: string
   name: string
+  code: string
   status: string
 }
 
@@ -8,6 +9,7 @@ export interface CategoryDto {
   id: string
   parentCategoryId: string | null
   name: string
+  code: string
   status: string
 }
 

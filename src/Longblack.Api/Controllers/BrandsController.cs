@@ -28,7 +28,7 @@ public class BrandsController(IBrandService brandService) : ApiControllerBase
     {
         try
         {
-            var brand = await brandService.CreateAsync(new CreateBrandDto(request.Name), CurrentUser, ct);
+            var brand = await brandService.CreateAsync(new CreateBrandDto(request.Name, request.Code), CurrentUser, ct);
             return CreatedAtAction(nameof(GetById), new { id = brand.Id }, ToResponse(brand));
         }
         catch (Exception ex)
@@ -43,7 +43,7 @@ public class BrandsController(IBrandService brandService) : ApiControllerBase
     {
         try
         {
-            var brand = await brandService.UpdateAsync(id, new UpdateBrandDto(request.Name), CurrentUser, ct);
+            var brand = await brandService.UpdateAsync(id, new UpdateBrandDto(request.Name, request.Code), CurrentUser, ct);
             return Ok(ToResponse(brand));
         }
         catch (Exception ex)
@@ -68,5 +68,5 @@ public class BrandsController(IBrandService brandService) : ApiControllerBase
     }
 
     private static BrandResponse ToResponse(BrandDto dto) =>
-        new(dto.Id, dto.Name, dto.Status, dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy);
+        new(dto.Id, dto.Name, dto.Code, dto.Status, dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy);
 }

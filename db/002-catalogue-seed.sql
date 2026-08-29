@@ -17,8 +17,8 @@
 -- ---------------------------------------------------------------------------
 -- Brands
 -- ---------------------------------------------------------------------------
-INSERT INTO brands (id, name, status, created_by, updated_by) VALUES
-    ('00000000-0000-0000-0001-000000000001', 'Generic', 'Active', 'system', 'system')
+INSERT INTO brands (id, name, code, status, created_by, updated_by) VALUES
+    ('00000000-0000-0000-0001-000000000001', 'Generic', 'GEN', 'Active', 'system', 'system')
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
@@ -53,29 +53,29 @@ ON CONFLICT DO NOTHING;
 -- ---------------------------------------------------------------------------
 -- Categories — root level
 -- ---------------------------------------------------------------------------
-INSERT INTO categories (id, parent_category_id, name, status, created_by, updated_by) VALUES
-    ('00000000-0000-0000-0004-000000000001', NULL, 'Men',   'Active', 'system', 'system'),
-    ('00000000-0000-0000-0004-000000000002', NULL, 'Women', 'Active', 'system', 'system'),
-    ('00000000-0000-0000-0004-000000000003', NULL, 'Kids',  'Active', 'system', 'system')
+INSERT INTO categories (id, parent_category_id, name, code, status, created_by, updated_by) VALUES
+    ('00000000-0000-0000-0004-000000000001', NULL, 'Men',   'MEN', 'Active', 'system', 'system'),
+    ('00000000-0000-0000-0004-000000000002', NULL, 'Women', 'WMN', 'Active', 'system', 'system'),
+    ('00000000-0000-0000-0004-000000000003', NULL, 'Kids',  'KDS', 'Active', 'system', 'system')
 ON CONFLICT DO NOTHING;
 
 -- Categories — Men
-INSERT INTO categories (id, parent_category_id, name, status, created_by, updated_by) VALUES
-    ('00000000-0000-0000-0004-000000000011', '00000000-0000-0000-0004-000000000001', 'T-Shirts', 'Active', 'system', 'system'),
-    ('00000000-0000-0000-0004-000000000012', '00000000-0000-0000-0004-000000000001', 'Shirts',   'Active', 'system', 'system'),
-    ('00000000-0000-0000-0004-000000000013', '00000000-0000-0000-0004-000000000001', 'Jeans',    'Active', 'system', 'system'),
-    ('00000000-0000-0000-0004-000000000014', '00000000-0000-0000-0004-000000000001', 'Shorts',   'Active', 'system', 'system')
+INSERT INTO categories (id, parent_category_id, name, code, status, created_by, updated_by) VALUES
+    ('00000000-0000-0000-0004-000000000011', '00000000-0000-0000-0004-000000000001', 'T-Shirts', 'TS',  'Active', 'system', 'system'),
+    ('00000000-0000-0000-0004-000000000012', '00000000-0000-0000-0004-000000000001', 'Shirts',   'SH',  'Active', 'system', 'system'),
+    ('00000000-0000-0000-0004-000000000013', '00000000-0000-0000-0004-000000000001', 'Jeans',    'JNS', 'Active', 'system', 'system'),
+    ('00000000-0000-0000-0004-000000000014', '00000000-0000-0000-0004-000000000001', 'Shorts',   'SHT', 'Active', 'system', 'system')
 ON CONFLICT DO NOTHING;
 
 -- Categories — Women
-INSERT INTO categories (id, parent_category_id, name, status, created_by, updated_by) VALUES
-    ('00000000-0000-0000-0004-000000000021', '00000000-0000-0000-0004-000000000002', 'Tops',    'Active', 'system', 'system'),
-    ('00000000-0000-0000-0004-000000000022', '00000000-0000-0000-0004-000000000002', 'Dresses', 'Active', 'system', 'system'),
-    ('00000000-0000-0000-0004-000000000023', '00000000-0000-0000-0004-000000000002', 'Jeans',   'Active', 'system', 'system')
+INSERT INTO categories (id, parent_category_id, name, code, status, created_by, updated_by) VALUES
+    ('00000000-0000-0000-0004-000000000021', '00000000-0000-0000-0004-000000000002', 'Tops',    'TOP', 'Active', 'system', 'system'),
+    ('00000000-0000-0000-0004-000000000022', '00000000-0000-0000-0004-000000000002', 'Dresses', 'DRS', 'Active', 'system', 'system'),
+    ('00000000-0000-0000-0004-000000000023', '00000000-0000-0000-0004-000000000002', 'Jeans',   'WJNS','Active', 'system', 'system')
 ON CONFLICT DO NOTHING;
 
 -- Categories — Kids
-INSERT INTO categories (id, parent_category_id, name, status, created_by, updated_by) VALUES
-    ('00000000-0000-0000-0004-000000000031', '00000000-0000-0000-0004-000000000003', 'Boys',  'Active', 'system', 'system'),
-    ('00000000-0000-0000-0004-000000000032', '00000000-0000-0000-0004-000000000003', 'Girls', 'Active', 'system', 'system')
+INSERT INTO categories (id, parent_category_id, name, code, status, created_by, updated_by) VALUES
+    ('00000000-0000-0000-0004-000000000031', '00000000-0000-0000-0004-000000000003', 'Boys',  'BOYS', 'Active', 'system', 'system'),
+    ('00000000-0000-0000-0004-000000000032', '00000000-0000-0000-0004-000000000003', 'Girls', 'GRLS', 'Active', 'system', 'system')
 ON CONFLICT DO NOTHING;

@@ -35,11 +35,16 @@ public class BrandService(AppDbContext db) : IBrandService
         if (duplicate)
             throw new DuplicateException(nameof(Brand), "name", dto.Name);
 
+        var codeDuplicate = await db.Brands.AnyAsync(b => b.Code == dto.Code, ct);
+        if (codeDuplicate)
+            throw new DuplicateException(nameof(Brand), "code", dto.Code);
+
         var now = DateTimeOffset.UtcNow;
         var brand = new Brand
         {
             Id = Guid.NewGuid(),
             Name = dto.Name,
+            Code = dto.Code,
             Status = ReferenceDataStatus.Active,
             CreatedAt = now,
             UpdatedAt = now,
@@ -61,7 +66,12 @@ public class BrandService(AppDbContext db) : IBrandService
         if (duplicate)
             throw new DuplicateException(nameof(Brand), "name", dto.Name);
 
+        var codeDuplicate = await db.Brands.AnyAsync(b => b.Code == dto.Code && b.Id != id, ct);
+        if (codeDuplicate)
+            throw new DuplicateException(nameof(Brand), "code", dto.Code);
+
         brand.Name = dto.Name;
+        brand.Code = dto.Code;
         brand.UpdatedAt = DateTimeOffset.UtcNow;
         brand.UpdatedBy = updatedBy;
 
@@ -83,5 +93,5 @@ public class BrandService(AppDbContext db) : IBrandService
     }
 
     private static BrandDto ToDto(Brand b) =>
-        new(b.Id, b.Name, b.Status, b.CreatedAt, b.UpdatedAt, b.CreatedBy, b.UpdatedBy);
+        new(b.Id, b.Name, b.Code, b.Status, b.CreatedAt, b.UpdatedAt, b.CreatedBy, b.UpdatedBy);
 }
