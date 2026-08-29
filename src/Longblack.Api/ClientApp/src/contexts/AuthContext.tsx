@@ -1,5 +1,6 @@
 import { jwtDecode } from 'jwt-decode'
-import { createContext, useCallback, useContext, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { TOKEN_KEY } from '../api/client'
 
 interface JwtPayload {
   sub: string
@@ -22,7 +23,6 @@ interface AuthContextValue {
   logout: () => void
 }
 
-const TOKEN_KEY = 'lb_token'
 
 function decodeUser(token: string): AuthUser | null {
   try {
@@ -63,6 +63,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null)
     setUser(null)
   }, [])
+
+  useEffect(() => {
+    function handleUnauthorized() { logout() }
+    window.addEventListener('lb:unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('lb:unauthorized', handleUnauthorized)
+  }, [logout])
 
   return (
     <AuthContext.Provider value={{ token, user, login, logout }}>

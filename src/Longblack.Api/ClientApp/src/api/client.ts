@@ -1,16 +1,7 @@
-let _getToken: (() => string | null) | null = null
-let _onUnauthorized: (() => void) | null = null
-
-export function configureApiClient(
-  getToken: () => string | null,
-  onUnauthorized: () => void,
-) {
-  _getToken = getToken
-  _onUnauthorized = onUnauthorized
-}
+export const TOKEN_KEY = 'lb_token'
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = _getToken?.()
+  const token = localStorage.getItem(TOKEN_KEY)
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(init.headers as Record<string, string> | undefined),
@@ -20,7 +11,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(path, { ...init, headers })
 
   if (res.status === 401) {
-    _onUnauthorized?.()
+    window.dispatchEvent(new Event('lb:unauthorized'))
     throw new Error('Unauthorized')
   }
 
