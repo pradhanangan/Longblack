@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 — Add Code field to Brands and Categories
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Product detail page fetches and makes available the brand code and category code for the current product (the product response now includes these via the updated Brand/Category DTOs from ticket 01, or via the cached brands/categories data)
 - [ ] In the Add Variant modal, when both Colour and Size are selected, the SKU field is pre-filled with `{BrandCode}-{CategoryCode}-{ColourCode}-{SizeCode}` (all uppercased, hyphen-separated)

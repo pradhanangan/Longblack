@@ -15,7 +15,7 @@ import {
 } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { api } from '../../api/client'
 import type { ColourDto, ProductVariantDto, SizeDto } from '../../api/types'
@@ -38,9 +38,11 @@ interface Props {
   onClose: () => void
   productId: string
   variant?: ProductVariantDto
+  brandCode?: string
+  categoryCode?: string
 }
 
-export function VariantFormDialog({ open, onClose, productId, variant }: Props) {
+export function VariantFormDialog({ open, onClose, productId, variant, brandCode, categoryCode }: Props) {
   const isEdit = !!variant
   const { showSuccess, showError } = useSnackbar()
   const queryClient = useQueryClient()
@@ -62,9 +64,25 @@ export function VariantFormDialog({ open, onClose, productId, variant }: Props) 
     handleSubmit,
     control,
     reset,
+    setValue,
+    getValues,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
+
+  const watchedColourId = useWatch({ control, name: 'colourId' })
+  const watchedSizeId = useWatch({ control, name: 'sizeId' })
+
+  // SKU suggestion: compute client-side from brand/category/colour/size codes
+  useEffect(() => {
+    if (isEdit || !brandCode || !categoryCode) return
+    const colour = colours?.find((c) => c.id === watchedColourId)
+    const size = sizes?.find((s) => s.id === watchedSizeId)
+    if (!colour || !size) return
+    const suggested = `${brandCode}-${categoryCode}-${colour.code}-${size.code}`.toUpperCase()
+    const current = getValues('sku')
+    if (!current) setValue('sku', suggested)
+  }, [watchedColourId, watchedSizeId, brandCode, categoryCode, colours, sizes, isEdit, getValues, setValue])
 
   useEffect(() => {
     if (open) {

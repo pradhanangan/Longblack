@@ -17,7 +17,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
-import type { ProductDto, ProductVariantDto } from '../api/types'
+import type { BrandDto, CategoryDto, ProductDto, ProductVariantDto } from '../api/types'
 import { ConfirmDialog } from '../components/products/ConfirmDialog'
 import { ProductFormDialog } from '../components/products/ProductFormDialog'
 import { VariantFormDialog } from '../components/products/VariantFormDialog'
@@ -38,6 +38,14 @@ function useVariants(productId: string) {
   })
 }
 
+function useBrands() {
+  return useQuery<BrandDto[]>({ queryKey: ['brands'], queryFn: () => api.get('/api/brands'), staleTime: 5 * 60_000 })
+}
+
+function useCategories() {
+  return useQuery<CategoryDto[]>({ queryKey: ['categories'], queryFn: () => api.get('/api/categories'), staleTime: 5 * 60_000 })
+}
+
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
@@ -53,6 +61,11 @@ export function ProductDetailPage() {
 
   const { data: product, isLoading: productLoading, isError: productError } = useProduct(id!)
   const { data: variants, isLoading: variantsLoading, isError: variantsError } = useVariants(id!)
+  const { data: brands } = useBrands()
+  const { data: categories } = useCategories()
+
+  const brandCode = brands?.find((b) => b.id === product?.brandId)?.code
+  const categoryCode = categories?.find((c) => c.id === product?.categoryId)?.code
 
   const statusMutation = useMutation({
     mutationFn: (status: string) =>
@@ -203,12 +216,16 @@ export function ProductDetailPage() {
         open={addVariantOpen}
         onClose={() => setAddVariantOpen(false)}
         productId={id!}
+        brandCode={brandCode}
+        categoryCode={categoryCode}
       />
       <VariantFormDialog
         open={!!editVariant}
         onClose={() => setEditVariant(undefined)}
         productId={id!}
         variant={editVariant}
+        brandCode={brandCode}
+        categoryCode={categoryCode}
       />
       <ConfirmDialog
         open={!!deactivateVariant}
