@@ -15,12 +15,13 @@ import {
 } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { BrandDto, CategoryDto, ProductDto, ProductVariantDto } from '../api/types'
 import { ConfirmDialog } from '../components/products/ConfirmDialog'
 import { ProductFormDialog } from '../components/products/ProductFormDialog'
 import { VariantFormDialog } from '../components/products/VariantFormDialog'
+import { VariantMatrixDialog } from '../components/products/VariantMatrixDialog'
 import { useAuth } from '../contexts/AuthContext'
 import { useSnackbar } from '../contexts/SnackbarContext'
 
@@ -48,6 +49,7 @@ function useCategories() {
 
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuth()
   const { showSuccess, showError } = useSnackbar()
   const queryClient = useQueryClient()
@@ -56,8 +58,15 @@ export function ProductDetailPage() {
   const [editOpen, setEditOpen] = useState(false)
   const [deactivateOpen, setDeactivateOpen] = useState(false)
   const [addVariantOpen, setAddVariantOpen] = useState(false)
+  const [matrixOpen, setMatrixOpen] = useState(() => searchParams.get('openMatrix') === '1')
   const [editVariant, setEditVariant] = useState<ProductVariantDto | undefined>()
   const [deactivateVariant, setDeactivateVariant] = useState<ProductVariantDto | undefined>()
+
+  function closeMatrix() {
+    setMatrixOpen(false)
+    searchParams.delete('openMatrix')
+    setSearchParams(searchParams, { replace: true })
+  }
 
   const { data: product, isLoading: productLoading, isError: productError } = useProduct(id!)
   const { data: variants, isLoading: variantsLoading, isError: variantsError } = useVariants(id!)
@@ -149,9 +158,14 @@ export function ProductDetailPage() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">Variants</Typography>
         {canWrite && (
-          <Button variant="contained" size="small" onClick={() => setAddVariantOpen(true)}>
-            Add Variant
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="outlined" size="small" onClick={() => setMatrixOpen(true)}>
+              Generate Variants
+            </Button>
+            <Button variant="contained" size="small" onClick={() => setAddVariantOpen(true)}>
+              Add Variant
+            </Button>
+          </Box>
         )}
       </Box>
 
@@ -226,6 +240,14 @@ export function ProductDetailPage() {
         variant={editVariant}
         brandCode={brandCode}
         categoryCode={categoryCode}
+      />
+      <VariantMatrixDialog
+        open={matrixOpen}
+        onClose={closeMatrix}
+        productId={id!}
+        brandCode={brandCode}
+        categoryCode={categoryCode}
+        existingVariants={variants}
       />
       <ConfirmDialog
         open={!!deactivateVariant}

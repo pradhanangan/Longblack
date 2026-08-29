@@ -14,8 +14,9 @@ import {
   TextField,
 } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { api } from '../../api/client'
 import type { BrandDto, CategoryDto, ProductDto } from '../../api/types'
@@ -41,6 +42,8 @@ export function ProductFormDialog({ open, onClose, product }: Props) {
   const isEdit = !!product
   const { showSuccess, showError } = useSnackbar()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const addVariantsRef = useRef(false)
 
   const { data: brands } = useQuery<BrandDto[]>({
     queryKey: ['brands'],
@@ -62,7 +65,7 @@ export function ProductFormDialog({ open, onClose, product }: Props) {
     setValue,
     getValues,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
   const watchedBrandId = useWatch({ control, name: 'brandId' })
@@ -107,12 +110,17 @@ export function ProductFormDialog({ open, onClose, product }: Props) {
         ? api.put<ProductDto>(`/api/products/${product!.id}`, body)
         : api.post<ProductDto>('/api/products', body)
     },
-    onSuccess: () => {
+    onSuccess: (data: ProductDto) => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
       showSuccess(isEdit ? 'Product updated.' : 'Product created.')
       onClose()
+      if (!isEdit && addVariantsRef.current) {
+        navigate(`/products/${data.id}?openMatrix=1`)
+      }
+      addVariantsRef.current = false
     },
     onError: (err: unknown) => {
+      addVariantsRef.current = false
       const error = err as Error & { status?: number }
       if (error.status === 409) {
         setError('productCode', { message: 'Product Code already exists.' })
@@ -183,10 +191,19 @@ export function ProductFormDialog({ open, onClose, product }: Props) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
+        {!isEdit && (
+          <Button
+            variant="outlined"
+            onClick={handleSubmit((v) => { addVariantsRef.current = true; mutation.mutate(v) })}
+            disabled={mutation.isPending}
+          >
+            Create &amp; Add Variants
+          </Button>
+        )}
         <Button
           variant="contained"
           onClick={handleSubmit((v) => mutation.mutate(v))}
-          disabled={isSubmitting || mutation.isPending}
+          disabled={mutation.isPending}
           startIcon={mutation.isPending ? <CircularProgress size={16} /> : undefined}
         >
           {isEdit ? 'Save' : 'Create'}

@@ -4,7 +4,7 @@
 
 **Blocked by:** 03 — SKU suggestion in Add / Edit Variant form, 04 — Batch variant creation API
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] A "Generate variants" button appears on the product detail page (visible to Manager and Admin)
 - [ ] Clicking it opens a multi-step dialog:
