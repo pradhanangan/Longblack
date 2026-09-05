@@ -71,7 +71,7 @@ npm run lint      # oxlint
 - `AppDbContext` (extends `IdentityDbContext<AppUser>`) lives in `Longblack.Infrastructure.Persistence`
 - Identity tables use snake_case names (`users`, `roles`, `user_roles`, etc.) — configured in `OnModelCreating`
 - Infrastructure DI is wired via `services.AddInfrastructure(configuration)` in `Program.cs`
-- EF Core migration command: `dotnet tool restore && dotnet ef migrations add <Name> --project src/Longblack.Infrastructure --startup-project src/Longblack.Api`
+- **Do not use EF Core migrations** (`dotnet ef migrations add`/`database update`). Schema changes are hand-written as idempotent SQL scripts in `db/` (e.g. `db/001-catalogue-schema.sql`), numbered in run order, and applied manually by the user via `psql`. When adding/changing entities, update `AppDbContext.OnModelCreating` to match, but leave writing and running the corresponding `db/NNN-*.sql` script to the user unless asked to write it.
 
 ## What Is Intentionally Out of Scope (MVP)
 

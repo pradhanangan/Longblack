@@ -16,6 +16,7 @@ public abstract class ApiControllerBase : ControllerBase
         DuplicateException de => Conflict(new { message = de.Message }),
         InvalidReferenceException ire => UnprocessableEntity(new { message = ire.Message }),
         BatchConflictException bce => Conflict(new { message = bce.Message, conflictingSkus = bce.ConflictingSkus }),
+        InvalidStateException ise => UnprocessableEntity(new { message = ise.Message }),
         _ => StatusCode(500, new { message = "An unexpected error occurred." })
     };
 }

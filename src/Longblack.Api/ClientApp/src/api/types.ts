@@ -61,3 +61,31 @@ export interface ProductDto {
   updatedBy: string
   variants?: ProductVariantDto[]
 }
+
+export interface GoodsReceiptLineDto {
+  id: string
+  goodsReceiptId: string
+  productVariantId: string
+  sku: string
+  barcode: string | null
+  quantity: number
+  unitCost: number
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+  updatedBy: string
+}
+
+export interface GoodsReceiptDto {
+  id: string
+  receiptNumber: string
+  supplierCode: string
+  receivedDate: string
+  status: string
+  receivedBy: string | null
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+  updatedBy: string
+  lines: GoodsReceiptLineDto[]
+}

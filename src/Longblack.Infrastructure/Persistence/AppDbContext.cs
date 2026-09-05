@@ -1,5 +1,7 @@
 using Longblack.Domain.Catalogue;
 using Longblack.Domain.Identity;
+using Longblack.Domain.Inventory;
+using Longblack.Domain.Receiving;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +16,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
     public DbSet<Size> Sizes => Set<Size>();
+    public DbSet<GoodsReceipt> GoodsReceipts => Set<GoodsReceipt>();
+    public DbSet<GoodsReceiptLine> GoodsReceiptLines => Set<GoodsReceiptLine>();
+    public DbSet<Longblack.Domain.Inventory.Inventory> Inventory => Set<Longblack.Domain.Inventory.Inventory>();
+    public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -134,6 +140,81 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(v => v.UpdatedBy).HasColumnName("updated_by").IsRequired();
             e.HasOne(v => v.Colour).WithMany().HasForeignKey(v => v.ColourId);
             e.HasOne(v => v.Size).WithMany().HasForeignKey(v => v.SizeId);
+        });
+
+        // Backs GoodsReceipt.SequenceNumber so receipt numbers (GR-0001) are assigned atomically by Postgres.
+        builder.HasSequence<int>("goods_receipt_seq").StartsAt(1);
+
+        // GoodsReceipt
+        builder.Entity<GoodsReceipt>(e =>
+        {
+            e.ToTable("goods_receipts");
+            e.HasKey(g => g.Id);
+            e.Property(g => g.Id).HasColumnName("id");
+            e.Property(g => g.SequenceNumber)
+                .HasColumnName("sequence_number")
+                .HasDefaultValueSql("nextval('goods_receipt_seq')")
+                .ValueGeneratedOnAdd();
+            e.HasIndex(g => g.SequenceNumber).IsUnique();
+            e.Property(g => g.SupplierCode).HasColumnName("supplier_code").IsRequired().HasMaxLength(50);
+            e.Property(g => g.ReceivedDate).HasColumnName("received_date").IsRequired();
+            e.Property(g => g.Status).HasColumnName("status").IsRequired();
+            e.Property(g => g.ReceivedBy).HasColumnName("received_by");
+            e.Property(g => g.CreatedAt).HasColumnName("created_at");
+            e.Property(g => g.UpdatedAt).HasColumnName("updated_at");
+            e.Property(g => g.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(g => g.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasMany(g => g.Lines).WithOne(l => l.GoodsReceipt).HasForeignKey(l => l.GoodsReceiptId);
+        });
+
+        // GoodsReceiptLine
+        builder.Entity<GoodsReceiptLine>(e =>
+        {
+            e.ToTable("goods_receipt_lines");
+            e.HasKey(l => l.Id);
+            e.Property(l => l.Id).HasColumnName("id");
+            e.Property(l => l.GoodsReceiptId).HasColumnName("goods_receipt_id");
+            e.Property(l => l.ProductVariantId).HasColumnName("product_variant_id");
+            e.Property(l => l.Quantity).HasColumnName("quantity").IsRequired();
+            e.Property(l => l.UnitCost).HasColumnName("unit_cost").HasPrecision(10, 2);
+            e.Property(l => l.CreatedAt).HasColumnName("created_at");
+            e.Property(l => l.UpdatedAt).HasColumnName("updated_at");
+            e.Property(l => l.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(l => l.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasOne(l => l.ProductVariant).WithMany().HasForeignKey(l => l.ProductVariantId);
+        });
+
+        // Inventory
+        builder.Entity<Longblack.Domain.Inventory.Inventory>(e =>
+        {
+            e.ToTable("inventory");
+            e.HasKey(i => i.Id);
+            e.Property(i => i.Id).HasColumnName("id");
+            e.Property(i => i.ProductVariantId).HasColumnName("product_variant_id");
+            e.Property(i => i.Quantity).HasColumnName("quantity").IsRequired();
+            e.Property(i => i.CreatedAt).HasColumnName("created_at");
+            e.Property(i => i.UpdatedAt).HasColumnName("updated_at");
+            e.Property(i => i.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(i => i.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasIndex(i => i.ProductVariantId).IsUnique();
+            e.HasOne(i => i.ProductVariant).WithMany().HasForeignKey(i => i.ProductVariantId);
+        });
+
+        // InventoryTransaction
+        builder.Entity<InventoryTransaction>(e =>
+        {
+            e.ToTable("inventory_transactions");
+            e.HasKey(t => t.Id);
+            e.Property(t => t.Id).HasColumnName("id");
+            e.Property(t => t.ProductVariantId).HasColumnName("product_variant_id");
+            e.Property(t => t.Type).HasColumnName("type").IsRequired();
+            e.Property(t => t.QuantityDelta).HasColumnName("quantity_delta").IsRequired();
+            e.Property(t => t.SourceType).HasColumnName("source_type").IsRequired();
+            e.Property(t => t.SourceId).HasColumnName("source_id").IsRequired();
+            e.Property(t => t.CreatedAt).HasColumnName("created_at");
+            e.Property(t => t.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.HasOne(t => t.ProductVariant).WithMany().HasForeignKey(t => t.ProductVariantId);
+            e.HasIndex(t => new { t.SourceType, t.SourceId });
         });
     }
 }

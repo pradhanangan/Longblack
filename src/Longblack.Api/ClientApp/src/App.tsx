@@ -4,6 +4,8 @@ import { AppLayout } from './components/layout/AppLayout'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
 import { SnackbarProvider } from './contexts/SnackbarContext'
+import { GoodsReceiptDetailPage } from './pages/GoodsReceiptDetailPage'
+import { GoodsReceiptListPage } from './pages/GoodsReceiptListPage'
 import { LoginPage } from './pages/LoginPage'
 import { ProductDetailPage } from './pages/ProductDetailPage'
 import { ProductListPage } from './pages/ProductListPage'
@@ -25,6 +27,8 @@ export default function App() {
                   <Route index element={<Navigate to="/products" replace />} />
                   <Route path="/products" element={<ProductListPage />} />
                   <Route path="/products/:id" element={<ProductDetailPage />} />
+                  <Route path="/goods-receipts" element={<GoodsReceiptListPage />} />
+                  <Route path="/goods-receipts/:id" element={<GoodsReceiptDetailPage />} />
                 </Route>
               </Route>
             </Routes>

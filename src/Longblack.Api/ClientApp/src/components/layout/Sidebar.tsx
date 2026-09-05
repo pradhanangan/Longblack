@@ -27,7 +27,7 @@ const DRAWER_WIDTH = 240
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: <DashboardIcon />, path: null },
   { label: 'Products', icon: <StyleIcon />, path: '/products' },
-  { label: 'Receiving', icon: <LocalShippingIcon />, path: null },
+  { label: 'Receiving', icon: <LocalShippingIcon />, path: '/goods-receipts' },
   { label: 'Inventory', icon: <InventoryIcon />, path: null },
   { label: 'Stock Take', icon: <ShoppingCartIcon />, path: null },
   { label: 'Suppliers', icon: <PeopleIcon />, path: null },
