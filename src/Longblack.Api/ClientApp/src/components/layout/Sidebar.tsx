@@ -28,8 +28,8 @@ const NAV_ITEMS = [
   { label: 'Dashboard', icon: <DashboardIcon />, path: null },
   { label: 'Products', icon: <StyleIcon />, path: '/products' },
   { label: 'Receiving', icon: <LocalShippingIcon />, path: '/goods-receipts' },
-  { label: 'Inventory', icon: <InventoryIcon />, path: null },
-  { label: 'Stock Take', icon: <ShoppingCartIcon />, path: null },
+  { label: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
+  { label: 'Stock Take', icon: <ShoppingCartIcon />, path: '/stock-takes' },
   { label: 'Suppliers', icon: <PeopleIcon />, path: null },
   { label: 'Settings', icon: <SettingsIcon />, path: null },
 ]

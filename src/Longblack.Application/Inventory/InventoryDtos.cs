@@ -1,11 +1,22 @@
 namespace Longblack.Application.Inventory;
 
 public record InventoryDto(
-    Guid Id,
     Guid ProductVariantId,
     string Sku,
+    string? Barcode,
+    string ProductName,
+    string? ColourName,
+    string? SizeName,
+    string Status,
     int Quantity,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset? UpdatedAt);
+
+public record ListInventoryFilter(
+    string? SearchQuery,
+    Guid? BrandId,
+    Guid? CategoryId,
+    // "All" means no status filter; null/empty defaults to Active; anything else is an exact match.
+    string? Status);
 
 public record InventoryTransactionDto(
     Guid Id,

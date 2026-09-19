@@ -6,11 +6,13 @@ using Longblack.Application.Catalogue.ProductVariants;
 using Longblack.Application.Catalogue.Sizes;
 using Longblack.Application.Inventory;
 using Longblack.Application.Receiving.GoodsReceipts;
+using Longblack.Application.StockTake;
 using Longblack.Domain.Identity;
 using Longblack.Infrastructure.Catalogue;
 using Longblack.Infrastructure.Inventory;
 using Longblack.Infrastructure.Persistence;
 using Longblack.Infrastructure.Receiving;
+using Longblack.Infrastructure.StockTake;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -46,6 +48,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<ISizeService, SizeService>();
         services.AddScoped<IInventoryService, InventoryService>();
         services.AddScoped<IGoodsReceiptService, GoodsReceiptService>();
+        services.AddScoped<IStockTakeService, StockTakeService>();
 
         return services;
     }

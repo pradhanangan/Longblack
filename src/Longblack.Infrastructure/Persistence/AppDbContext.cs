@@ -4,6 +4,7 @@ using Longblack.Domain.Inventory;
 using Longblack.Domain.Receiving;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using StockTakeEntity = Longblack.Domain.StockTake.StockTake;
 
 namespace Longblack.Infrastructure.Persistence;
 
@@ -20,6 +21,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<GoodsReceiptLine> GoodsReceiptLines => Set<GoodsReceiptLine>();
     public DbSet<Longblack.Domain.Inventory.Inventory> Inventory => Set<Longblack.Domain.Inventory.Inventory>();
     public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
+    public DbSet<StockTakeEntity> StockTakes => Set<StockTakeEntity>();
+    public DbSet<Longblack.Domain.StockTake.StockTakeItem> StockTakeItems => Set<Longblack.Domain.StockTake.StockTakeItem>();
+    public DbSet<Longblack.Domain.StockTake.StockTakeCount> StockTakeCounts => Set<Longblack.Domain.StockTake.StockTakeCount>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -215,6 +219,68 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(t => t.CreatedBy).HasColumnName("created_by").IsRequired();
             e.HasOne(t => t.ProductVariant).WithMany().HasForeignKey(t => t.ProductVariantId);
             e.HasIndex(t => new { t.SourceType, t.SourceId });
+        });
+
+        // Backs StockTake.SequenceNumber so reference numbers (ST-0001) are assigned atomically by Postgres.
+        builder.HasSequence<int>("stock_take_seq").StartsAt(1);
+
+        // StockTake
+        builder.Entity<StockTakeEntity>(e =>
+        {
+            e.ToTable("stock_takes");
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Id).HasColumnName("id");
+            e.Property(s => s.SequenceNumber)
+                .HasColumnName("sequence_number")
+                .HasDefaultValueSql("nextval('stock_take_seq')")
+                .ValueGeneratedOnAdd();
+            e.HasIndex(s => s.SequenceNumber).IsUnique();
+            e.Property(s => s.BrandId).HasColumnName("brand_id");
+            e.Property(s => s.CategoryId).HasColumnName("category_id");
+            e.Property(s => s.Status).HasColumnName("status").IsRequired();
+            e.Property(s => s.StartDate).HasColumnName("start_date");
+            e.Property(s => s.CompletionDate).HasColumnName("completion_date");
+            e.Property(s => s.CompletedBy).HasColumnName("completed_by");
+            e.Property(s => s.ApprovedDate).HasColumnName("approved_date");
+            e.Property(s => s.ApprovedBy).HasColumnName("approved_by");
+            e.Property(s => s.CreatedAt).HasColumnName("created_at");
+            e.Property(s => s.UpdatedAt).HasColumnName("updated_at");
+            e.Property(s => s.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(s => s.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasOne(s => s.Brand).WithMany().HasForeignKey(s => s.BrandId).IsRequired(false);
+            e.HasOne(s => s.Category).WithMany().HasForeignKey(s => s.CategoryId).IsRequired(false);
+            e.HasMany(s => s.Items).WithOne(i => i.StockTake).HasForeignKey(i => i.StockTakeId);
+        });
+
+        // StockTakeItem
+        builder.Entity<Longblack.Domain.StockTake.StockTakeItem>(e =>
+        {
+            e.ToTable("stock_take_items");
+            e.HasKey(i => i.Id);
+            e.Property(i => i.Id).HasColumnName("id");
+            e.Property(i => i.StockTakeId).HasColumnName("stock_take_id");
+            e.Property(i => i.ProductVariantId).HasColumnName("product_variant_id");
+            e.Property(i => i.ExpectedQuantity).HasColumnName("expected_quantity").IsRequired();
+            e.Property(i => i.CountedQuantity).HasColumnName("counted_quantity");
+            e.Property(i => i.Status).HasColumnName("status").IsRequired();
+            e.Property(i => i.CreatedAt).HasColumnName("created_at");
+            e.Property(i => i.UpdatedAt).HasColumnName("updated_at");
+            e.Property(i => i.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(i => i.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasOne(i => i.ProductVariant).WithMany().HasForeignKey(i => i.ProductVariantId);
+            e.HasMany(i => i.Counts).WithOne(c => c.StockTakeItem).HasForeignKey(c => c.StockTakeItemId);
+        });
+
+        // StockTakeCount — immutable audit rows, no updated_at/updated_by.
+        builder.Entity<Longblack.Domain.StockTake.StockTakeCount>(e =>
+        {
+            e.ToTable("stock_take_counts");
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Id).HasColumnName("id");
+            e.Property(c => c.StockTakeItemId).HasColumnName("stock_take_item_id");
+            e.Property(c => c.Quantity).HasColumnName("quantity").IsRequired();
+            e.Property(c => c.CountedAt).HasColumnName("counted_at");
+            e.Property(c => c.CountedBy).HasColumnName("counted_by").IsRequired();
         });
     }
 }

@@ -2,7 +2,9 @@ namespace Longblack.Application.Inventory;
 
 public interface IInventoryService
 {
-    Task<IReadOnlyList<InventoryDto>> ListAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<InventoryDto>> ListAsync(ListInventoryFilter filter, CancellationToken ct = default);
+    // Returns null only if the variant itself doesn't exist; a variant with no Inventory row yet
+    // (never received) still returns a DTO with Quantity 0.
     Task<InventoryDto?> GetByVariantIdAsync(Guid productVariantId, CancellationToken ct = default);
     Task<IReadOnlyList<InventoryTransactionDto>> GetTransactionsAsync(Guid productVariantId, CancellationToken ct = default);
 

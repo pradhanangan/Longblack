@@ -9,9 +9,15 @@ namespace Longblack.Api.Controllers;
 public class InventoryController(IInventoryService inventoryService) : ApiControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List(CancellationToken ct)
+    public async Task<IActionResult> List(
+        [FromQuery] string? q,
+        [FromQuery] Guid? brandId,
+        [FromQuery] Guid? categoryId,
+        [FromQuery] string? status,
+        CancellationToken ct)
     {
-        var inventory = await inventoryService.ListAsync(ct);
+        var filter = new ListInventoryFilter(q, brandId, categoryId, status);
+        var inventory = await inventoryService.ListAsync(filter, ct);
         return Ok(inventory.Select(ToResponse));
     }
 
@@ -31,5 +37,6 @@ public class InventoryController(IInventoryService inventoryService) : ApiContro
     }
 
     private static InventoryResponse ToResponse(InventoryDto dto) =>
-        new(dto.Id, dto.ProductVariantId, dto.Sku, dto.Quantity, dto.UpdatedAt);
+        new(dto.ProductVariantId, dto.Sku, dto.Barcode, dto.ProductName,
+            dto.ColourName, dto.SizeName, dto.Status, dto.Quantity, dto.UpdatedAt);
 }

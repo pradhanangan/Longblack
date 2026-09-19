@@ -89,3 +89,69 @@ export interface GoodsReceiptDto {
   updatedBy: string
   lines: GoodsReceiptLineDto[]
 }
+
+export interface InventoryDto {
+  productVariantId: string
+  sku: string
+  barcode: string | null
+  productName: string
+  colourName: string | null
+  sizeName: string | null
+  status: string
+  quantity: number
+  updatedAt: string | null
+}
+
+export interface InventoryTransactionDto {
+  id: string
+  productVariantId: string
+  type: string
+  quantityDelta: number
+  sourceType: string
+  sourceId: string
+  createdAt: string
+  createdBy: string
+}
+
+export interface StockTakeItemDto {
+  id: string
+  stockTakeId: string
+  productVariantId: string
+  sku: string
+  barcode: string | null
+  productName: string
+  colourName: string | null
+  sizeName: string | null
+  expectedQuantity: number
+  countedQuantity: number | null
+  variance: number | null
+  status: string
+}
+
+export interface StockTakeDto {
+  id: string
+  referenceNumber: string
+  brandId: string | null
+  brandName: string | null
+  categoryId: string | null
+  categoryName: string | null
+  status: string
+  startDate: string | null
+  completionDate: string | null
+  completedBy: string | null
+  approvedDate: string | null
+  approvedBy: string | null
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+  updatedBy: string
+  items: StockTakeItemDto[]
+}
+
+export interface StockTakeCountDto {
+  id: string
+  stockTakeItemId: string
+  quantity: number
+  countedAt: string
+  countedBy: string
+}

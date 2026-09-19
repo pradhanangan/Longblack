@@ -90,5 +90,11 @@ public class ProductsController(IProductService productService) : ApiControllerB
     private static ProductResponse ToResponse(ProductDto dto) =>
         new(dto.Id, dto.ProductCode, dto.Name, dto.Description,
             dto.BrandId, dto.BrandName, dto.CategoryId, dto.CategoryName,
-            dto.Status, dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy);
+            dto.Status, dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy)
+        {
+            Variants = dto.Variants?.Select(v => new ProductVariantResponse(
+                v.Id, v.ProductId, v.Sku, v.Barcode,
+                v.ColourId, v.ColourName, v.SizeId, v.SizeName,
+                v.SellingPrice, v.Status, v.CreatedAt, v.UpdatedAt, v.CreatedBy, v.UpdatedBy)).ToList()
+        };
 }
