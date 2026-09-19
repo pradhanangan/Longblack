@@ -6,4 +6,7 @@
     <Project Path="src/Longblack.Infrastructure/Longblack.Infrastructure.csproj" Id="4d36f3f5-17c5-446c-a12e-85d6023e145b" />
   </Folder>
   <Folder Name="/tests/" />
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
 </Solution>

@@ -1,0 +1,16 @@
+services:
+  # longblack-api:
+  #  image: ${DOCKER_REGISTRY-}longblackapi
+  #  build:
+  #    context: .
+  #    dockerfile: src/Longblack.API/Dockerfile
+
+  longblack-db:
+    image: postgres:latest
+        container_name: Longblack.Db
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: Longblack.App
+        ports:
+          - "35432:5432"
