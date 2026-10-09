@@ -1,6 +1,6 @@
-@Longblack.API_HostAddress = http://localhost:5062
+@Longblack.Api_HostAddress = http://localhost:5062
 
-GET {{Longblack.API_HostAddress}}/weatherforecast/
+GET {{Longblack.Api_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###

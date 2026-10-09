@@ -12,13 +12,13 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["src/Longblack.API/Longblack.Api.csproj", "src/Longblack.API/"]
+COPY ["src/Longblack.Api/Longblack.Api.csproj", "src/Longblack.API/"]
 COPY ["src/Longblack.Infrastructure/Longblack.Infrastructure.csproj", "src/Longblack.Infrastructure/"]
 COPY ["src/Longblack.Application/Longblack.Application.csproj", "src/Longblack.Application/"]
 COPY ["src/Longblack.Domain/Longblack.Domain.csproj", "src/Longblack.Domain/"]
-RUN dotnet restore "./src/Longblack.API/Longblack.Api.csproj"
+RUN dotnet restore "./src/Longblack.Api/Longblack.Api.csproj"
 COPY . .
-WORKDIR "/src/src/Longblack.API"
+WORKDIR "/src/src/Longblack.Api"
 RUN dotnet build "./Longblack.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage

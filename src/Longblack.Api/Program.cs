@@ -42,7 +42,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference(options =>
     {
-        options.Title = "Longblack API";
+        options.Title = "Longblack Api";
         options.Theme = ScalarTheme.Default;
         options.Authentication = new ScalarAuthenticationOptions
         {

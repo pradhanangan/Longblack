@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod'
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
   CircularProgress,
@@ -12,50 +12,50 @@ import {
   MenuItem,
   Select,
   TextField,
-} from '@mui/material'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef } from 'react'
-import { Controller, useForm, useWatch } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
-import { z } from 'zod'
-import { api } from '../../api/client'
-import type { BrandDto, CategoryDto, ProductDto } from '../../api/types'
-import { useSnackbar } from '../../contexts/SnackbarContext'
+} from "@mui/material";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import { z } from "zod";
+import { api } from "../../api/client";
+import type { BrandDto, CategoryDto, ProductDto } from "../../api/types";
+import { useSnackbar } from "../../contexts/SnackbarContext";
 
 const schema = z.object({
-  productCode: z.string().min(1, 'Product Code is required'),
-  name: z.string().min(1, 'Name is required'),
+  productCode: z.string().min(1, "Product Code is required"),
+  name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   brandId: z.string().optional(),
   categoryId: z.string().optional(),
-})
+});
 
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<typeof schema>;
 
 interface Props {
-  open: boolean
-  onClose: () => void
-  product?: ProductDto
+  open: boolean;
+  onClose: () => void;
+  product?: ProductDto;
 }
 
 export function ProductFormDialog({ open, onClose, product }: Props) {
-  const isEdit = !!product
-  const { showSuccess, showError } = useSnackbar()
-  const queryClient = useQueryClient()
-  const navigate = useNavigate()
-  const addVariantsRef = useRef(false)
+  const isEdit = !!product;
+  const { showSuccess, showError } = useSnackbar();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const addVariantsRef = useRef(false);
 
   const { data: brands } = useQuery<BrandDto[]>({
-    queryKey: ['brands'],
-    queryFn: () => api.get('/api/brands'),
+    queryKey: ["brands"],
+    queryFn: () => api.get("/api/brands"),
     staleTime: 5 * 60_000,
-  })
+  });
 
   const { data: categories } = useQuery<CategoryDto[]>({
-    queryKey: ['categories'],
-    queryFn: () => api.get('/api/categories'),
+    queryKey: ["categories"],
+    queryFn: () => api.get("/api/categories"),
     staleTime: 5 * 60_000,
-  })
+  });
 
   const {
     register,
@@ -66,38 +66,41 @@ export function ProductFormDialog({ open, onClose, product }: Props) {
     getValues,
     setError,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) })
+  } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
-  const watchedBrandId = useWatch({ control, name: 'brandId' })
-  const watchedCategoryId = useWatch({ control, name: 'categoryId' })
+  const watchedBrandId = useWatch({ control, name: "brandId" });
+  const watchedCategoryId = useWatch({ control, name: "categoryId" });
 
   // Fetch suggestion whenever brand+category changes (Add mode only)
   const { data: suggestion } = useQuery<{ suggestedCode: string }>({
-    queryKey: ['products', 'suggest-code', watchedBrandId, watchedCategoryId],
-    queryFn: () => api.get(`/api/products/suggest-code?brandId=${watchedBrandId}&categoryId=${watchedCategoryId}`),
+    queryKey: ["products", "suggest-code", watchedBrandId, watchedCategoryId],
+    queryFn: () =>
+      api.get(
+        `/api/products/suggest-code?brandId=${watchedBrandId}&categoryId=${watchedCategoryId}`,
+      ),
     enabled: !isEdit && !!watchedBrandId && !!watchedCategoryId,
     staleTime: 0,
-  })
+  });
 
   // Pre-fill productCode only when field is still empty
   useEffect(() => {
     if (!isEdit && suggestion?.suggestedCode) {
-      const current = getValues('productCode')
-      if (!current) setValue('productCode', suggestion.suggestedCode)
+      const current = getValues("productCode");
+      if (!current) setValue("productCode", suggestion.suggestedCode);
     }
-  }, [suggestion, isEdit, getValues, setValue])
+  }, [suggestion, isEdit, getValues, setValue]);
 
   useEffect(() => {
     if (open) {
       reset({
-        productCode: product?.productCode ?? '',
-        name: product?.name ?? '',
-        description: product?.description ?? '',
-        brandId: product?.brandId ?? '',
-        categoryId: product?.categoryId ?? '',
-      })
+        productCode: product?.productCode ?? "",
+        name: product?.name ?? "",
+        description: product?.description ?? "",
+        brandId: product?.brandId ?? "",
+        categoryId: product?.categoryId ?? "",
+      });
     }
-  }, [open, product, reset])
+  }, [open, product, reset]);
 
   const mutation = useMutation({
     mutationFn: (values: FormValues) => {
@@ -105,40 +108,40 @@ export function ProductFormDialog({ open, onClose, product }: Props) {
         ...values,
         brandId: values.brandId || null,
         categoryId: values.categoryId || null,
-      }
+      };
       return isEdit
         ? api.put<ProductDto>(`/api/products/${product!.id}`, body)
-        : api.post<ProductDto>('/api/products', body)
+        : api.post<ProductDto>("/api/products", body);
     },
     onSuccess: (data: ProductDto) => {
-      queryClient.invalidateQueries({ queryKey: ['products'] })
-      showSuccess(isEdit ? 'Product updated.' : 'Product created.')
-      onClose()
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      showSuccess(isEdit ? "Product updated." : "Product created.");
+      onClose();
       if (!isEdit && addVariantsRef.current) {
-        navigate(`/products/${data.id}?openMatrix=1`)
+        navigate(`/products/${data.id}?openMatrix=1`);
       }
-      addVariantsRef.current = false
+      addVariantsRef.current = false;
     },
     onError: (err: unknown) => {
-      addVariantsRef.current = false
-      const error = err as Error & { status?: number }
+      addVariantsRef.current = false;
+      const error = err as Error & { status?: number };
       if (error.status === 409) {
-        setError('productCode', { message: 'Product Code already exists.' })
+        setError("productCode", { message: "Product Code already exists." });
       } else {
-        showError(error.message ?? 'Failed to save product.')
+        showError(error.message ?? "Failed to save product.");
       }
     },
-  })
+  });
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{isEdit ? 'Edit Product' : 'Add Product'}</DialogTitle>
+      <DialogTitle>{isEdit ? "Edit Product" : "Add Product"}</DialogTitle>
       <DialogContent>
         <TextField
           label="Product Code"
           fullWidth
           margin="normal"
-          {...register('productCode')}
+          {...register("productCode")}
           error={!!errors.productCode}
           helperText={errors.productCode?.message}
           disabled={isEdit}
@@ -148,7 +151,7 @@ export function ProductFormDialog({ open, onClose, product }: Props) {
           label="Name"
           fullWidth
           margin="normal"
-          {...register('name')}
+          {...register("name")}
           error={!!errors.name}
           helperText={errors.name?.message}
         />
@@ -158,7 +161,7 @@ export function ProductFormDialog({ open, onClose, product }: Props) {
           margin="normal"
           multiline
           rows={3}
-          {...register('description')}
+          {...register("description")}
         />
         <Controller
           name="brandId"
@@ -168,9 +171,15 @@ export function ProductFormDialog({ open, onClose, product }: Props) {
               <InputLabel>Brand</InputLabel>
               <Select {...field} label="Brand">
                 <MenuItem value="">None</MenuItem>
-                {brands?.map((b) => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
+                {brands?.map((b) => (
+                  <MenuItem key={b.id} value={b.id}>
+                    {b.name}
+                  </MenuItem>
+                ))}
               </Select>
-              {errors.brandId && <FormHelperText>{errors.brandId.message}</FormHelperText>}
+              {errors.brandId && (
+                <FormHelperText>{errors.brandId.message}</FormHelperText>
+              )}
             </FormControl>
           )}
         />
@@ -182,9 +191,15 @@ export function ProductFormDialog({ open, onClose, product }: Props) {
               <InputLabel>Category</InputLabel>
               <Select {...field} label="Category">
                 <MenuItem value="">None</MenuItem>
-                {categories?.map((c) => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+                {categories?.map((c) => (
+                  <MenuItem key={c.id} value={c.id}>
+                    {c.name}
+                  </MenuItem>
+                ))}
               </Select>
-              {errors.categoryId && <FormHelperText>{errors.categoryId.message}</FormHelperText>}
+              {errors.categoryId && (
+                <FormHelperText>{errors.categoryId.message}</FormHelperText>
+              )}
             </FormControl>
           )}
         />
@@ -194,7 +209,10 @@ export function ProductFormDialog({ open, onClose, product }: Props) {
         {!isEdit && (
           <Button
             variant="outlined"
-            onClick={handleSubmit((v) => { addVariantsRef.current = true; mutation.mutate(v) })}
+            onClick={handleSubmit((v) => {
+              addVariantsRef.current = true;
+              mutation.mutate(v);
+            })}
             disabled={mutation.isPending}
           >
             Create &amp; Add Variants
@@ -204,11 +222,13 @@ export function ProductFormDialog({ open, onClose, product }: Props) {
           variant="contained"
           onClick={handleSubmit((v) => mutation.mutate(v))}
           disabled={mutation.isPending}
-          startIcon={mutation.isPending ? <CircularProgress size={16} /> : undefined}
+          startIcon={
+            mutation.isPending ? <CircularProgress size={16} /> : undefined
+          }
         >
-          {isEdit ? 'Save' : 'Create'}
+          {isEdit ? "Save" : "Create"}
         </Button>
       </DialogActions>
     </Dialog>
-  )
+  );
 }

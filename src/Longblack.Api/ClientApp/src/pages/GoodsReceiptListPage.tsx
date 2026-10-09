@@ -1,4 +1,4 @@
-import AddIcon from '@mui/icons-material/Add'
+import AddIcon from "@mui/icons-material/Add";
 import {
   Box,
   Button,
@@ -14,58 +14,76 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Toolbar,
   Typography,
-} from '@mui/material'
-import { useQuery } from '@tanstack/react-query'
-import { useDeferredValue, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { api } from '../api/client'
-import type { GoodsReceiptDto } from '../api/types'
-import { GoodsReceiptFormDialog } from '../components/receiving/GoodsReceiptFormDialog'
-import { useAuth } from '../contexts/AuthContext'
+} from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
+import { useDeferredValue, useState } from "react";
+import { Link } from "react-router-dom";
+import { api } from "../api/client";
+import type { GoodsReceiptDto } from "../api/types";
+import { GoodsReceiptFormDialog } from "../components/receiving/GoodsReceiptFormDialog";
+import { useAuth } from "../contexts/AuthContext";
 
-function statusColor(status: string): 'default' | 'success' | 'error' {
-  if (status === 'Received') return 'success'
-  if (status === 'Cancelled') return 'error'
-  return 'default'
+function statusColor(status: string): "default" | "success" | "error" {
+  if (status === "Received") return "success";
+  if (status === "Cancelled") return "error";
+  return "default";
 }
 
 function useGoodsReceipts(status: string, supplierCode: string) {
-  const params = new URLSearchParams()
-  if (status) params.set('status', status)
-  if (supplierCode) params.set('supplierCode', supplierCode)
-  const qs = params.toString()
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  if (supplierCode) params.set("supplierCode", supplierCode);
+  const qs = params.toString();
   return useQuery<GoodsReceiptDto[]>({
-    queryKey: ['goods-receipts', status, supplierCode],
-    queryFn: () => api.get(`/api/goods-receipts${qs ? `?${qs}` : ''}`),
-  })
+    queryKey: ["goods-receipts", status, supplierCode],
+    queryFn: () => api.get(`/api/goods-receipts${qs ? `?${qs}` : ""}`),
+  });
 }
 
 export function GoodsReceiptListPage() {
-  const { user } = useAuth()
-  const canCreate = user?.roles.some((r) => r === 'Staff' || r === 'Manager' || r === 'Admin') ?? false
+  const { user } = useAuth();
+  const canCreate =
+    user?.roles.some(
+      (r) => r === "Staff" || r === "Manager" || r === "Admin",
+    ) ?? false;
 
-  const [status, setStatus] = useState('')
-  const [supplierCodeInput, setSupplierCodeInput] = useState('')
-  const [createOpen, setCreateOpen] = useState(false)
+  const [status, setStatus] = useState("");
+  const [supplierCodeInput, setSupplierCodeInput] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
 
-  const deferredSupplierCode = useDeferredValue(supplierCodeInput)
-  const { data: receipts, isLoading, isError } = useGoodsReceipts(status, deferredSupplierCode)
+  const deferredSupplierCode = useDeferredValue(supplierCodeInput);
+  const {
+    data: receipts,
+    isLoading,
+    isError,
+  } = useGoodsReceipts(status, deferredSupplierCode);
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Toolbar
+        disableGutters
+        sx={{ justifyContent: "space-between", gap: 1, mb: 3 }}
+      >
         <Typography variant="h5">Goods Receipts</Typography>
         {canCreate && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setCreateOpen(true)}
+          >
             New Receipt
           </Button>
         )}
-      </Box>
+      </Toolbar>
 
-      <GoodsReceiptFormDialog open={createOpen} onClose={() => setCreateOpen(false)} />
+      <GoodsReceiptFormDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+      />
 
-      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
         <TextField
           label="Supplier Code"
           size="small"
@@ -75,7 +93,11 @@ export function GoodsReceiptListPage() {
         />
         <FormControl size="small" sx={{ minWidth: 140 }}>
           <InputLabel>Status</InputLabel>
-          <Select value={status} label="Status" onChange={(e) => setStatus(e.target.value)}>
+          <Select
+            value={status}
+            label="Status"
+            onChange={(e) => setStatus(e.target.value)}
+          >
             <MenuItem value="">All</MenuItem>
             <MenuItem value="Draft">Draft</MenuItem>
             <MenuItem value="Received">Received</MenuItem>
@@ -85,11 +107,17 @@ export function GoodsReceiptListPage() {
       </Box>
 
       {isLoading && <CircularProgress />}
-      {isError && <Typography color="error">Failed to load goods receipts.</Typography>}
+      {isError && (
+        <Typography color="error">Failed to load goods receipts.</Typography>
+      )}
 
-      {!isLoading && !isError && receipts && (
-        receipts.length === 0 ? (
-          <Typography color="text.secondary">No goods receipts match the current filters.</Typography>
+      {!isLoading &&
+        !isError &&
+        receipts &&
+        (receipts.length === 0 ? (
+          <Typography color="text.secondary">
+            No goods receipts match the current filters.
+          </Typography>
         ) : (
           <Table size="small">
             <TableHead>
@@ -104,21 +132,33 @@ export function GoodsReceiptListPage() {
               {receipts.map((r) => (
                 <TableRow key={r.id} hover>
                   <TableCell>
-                    <Link to={`/goods-receipts/${r.id}`} style={{ textDecoration: 'none', color: 'inherit', fontWeight: 500 }}>
+                    <Link
+                      to={`/goods-receipts/${r.id}`}
+                      style={{
+                        textDecoration: "none",
+                        color: "inherit",
+                        fontWeight: 500,
+                      }}
+                    >
                       {r.receiptNumber}
                     </Link>
                   </TableCell>
                   <TableCell>{r.supplierCode}</TableCell>
-                  <TableCell>{new Date(r.receivedDate).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Chip label={r.status} size="small" color={statusColor(r.status)} />
+                    {new Date(r.receivedDate).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={r.status}
+                      size="small"
+                      color={statusColor(r.status)}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        )
-      )}
+        ))}
     </Box>
-  )
+  );
 }

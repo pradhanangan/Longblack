@@ -12,62 +12,74 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Toolbar,
   Typography,
-} from '@mui/material'
-import { useQuery } from '@tanstack/react-query'
-import { useDeferredValue, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { api } from '../api/client'
-import type { BrandDto, CategoryDto } from '../api/types'
-import type { InventoryDto } from '../api/types'
+} from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
+import { useDeferredValue, useState } from "react";
+import { Link } from "react-router-dom";
+import { api } from "../api/client";
+import type { BrandDto, CategoryDto } from "../api/types";
+import type { InventoryDto } from "../api/types";
 
-function useInventory(q: string, brandId: string, categoryId: string, status: string) {
-  const params = new URLSearchParams()
-  if (q) params.set('q', q)
-  if (brandId) params.set('brandId', brandId)
-  if (categoryId) params.set('categoryId', categoryId)
+function useInventory(
+  q: string,
+  brandId: string,
+  categoryId: string,
+  status: string,
+) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  if (brandId) params.set("brandId", brandId);
+  if (categoryId) params.set("categoryId", categoryId);
   // Always sent (Active/Inactive/All) — unlike Products, "All" must be an explicit value the
   // backend can distinguish from "not provided" (which defaults to Active).
-  params.set('status', status)
+  params.set("status", status);
   return useQuery<InventoryDto[]>({
-    queryKey: ['inventory', q, brandId, categoryId, status],
+    queryKey: ["inventory", q, brandId, categoryId, status],
     queryFn: () => api.get(`/api/inventory?${params.toString()}`),
-  })
+  });
 }
 
 function useBrands() {
   return useQuery<BrandDto[]>({
-    queryKey: ['brands'],
-    queryFn: () => api.get('/api/brands'),
+    queryKey: ["brands"],
+    queryFn: () => api.get("/api/brands"),
     staleTime: 5 * 60_000,
-  })
+  });
 }
 
 function useCategories() {
   return useQuery<CategoryDto[]>({
-    queryKey: ['categories'],
-    queryFn: () => api.get('/api/categories'),
+    queryKey: ["categories"],
+    queryFn: () => api.get("/api/categories"),
     staleTime: 5 * 60_000,
-  })
+  });
 }
 
 export function InventoryListPage() {
-  const [searchInput, setSearchInput] = useState('')
-  const [brandId, setBrandId] = useState('')
-  const [categoryId, setCategoryId] = useState('')
-  const [status, setStatus] = useState('Active')
+  const [searchInput, setSearchInput] = useState("");
+  const [brandId, setBrandId] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [status, setStatus] = useState("Active");
 
-  const deferredSearch = useDeferredValue(searchInput)
+  const deferredSearch = useDeferredValue(searchInput);
 
-  const { data: inventory, isLoading, isError } = useInventory(deferredSearch, brandId, categoryId, status)
-  const { data: brands } = useBrands()
-  const { data: categories } = useCategories()
+  const {
+    data: inventory,
+    isLoading,
+    isError,
+  } = useInventory(deferredSearch, brandId, categoryId, status);
+  const { data: brands } = useBrands();
+  const { data: categories } = useCategories();
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 3 }}>Inventory</Typography>
+      <Toolbar disableGutters sx={{ mb: 3 }}>
+        <Typography variant="h5">Inventory</Typography>
+      </Toolbar>
 
-      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
         <TextField
           label="Search"
           size="small"
@@ -78,21 +90,41 @@ export function InventoryListPage() {
         />
         <FormControl size="small" sx={{ minWidth: 160 }}>
           <InputLabel>Brand</InputLabel>
-          <Select value={brandId} label="Brand" onChange={(e) => setBrandId(e.target.value)}>
+          <Select
+            value={brandId}
+            label="Brand"
+            onChange={(e) => setBrandId(e.target.value)}
+          >
             <MenuItem value="">All brands</MenuItem>
-            {brands?.map((b) => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
+            {brands?.map((b) => (
+              <MenuItem key={b.id} value={b.id}>
+                {b.name}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 160 }}>
           <InputLabel>Category</InputLabel>
-          <Select value={categoryId} label="Category" onChange={(e) => setCategoryId(e.target.value)}>
+          <Select
+            value={categoryId}
+            label="Category"
+            onChange={(e) => setCategoryId(e.target.value)}
+          >
             <MenuItem value="">All categories</MenuItem>
-            {categories?.map((c) => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+            {categories?.map((c) => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.name}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Status</InputLabel>
-          <Select value={status} label="Status" onChange={(e) => setStatus(e.target.value)}>
+          <Select
+            value={status}
+            label="Status"
+            onChange={(e) => setStatus(e.target.value)}
+          >
             <MenuItem value="Active">Active</MenuItem>
             <MenuItem value="Inactive">Inactive</MenuItem>
             <MenuItem value="All">All</MenuItem>
@@ -101,11 +133,17 @@ export function InventoryListPage() {
       </Box>
 
       {isLoading && <CircularProgress />}
-      {isError && <Typography color="error">Failed to load inventory.</Typography>}
+      {isError && (
+        <Typography color="error">Failed to load inventory.</Typography>
+      )}
 
-      {!isLoading && !isError && inventory && (
-        inventory.length === 0 ? (
-          <Typography color="text.secondary">No variants match the current filters.</Typography>
+      {!isLoading &&
+        !isError &&
+        inventory &&
+        (inventory.length === 0 ? (
+          <Typography color="text.secondary">
+            No variants match the current filters.
+          </Typography>
         ) : (
           <Table size="small">
             <TableHead>
@@ -125,25 +163,32 @@ export function InventoryListPage() {
                   <TableCell>
                     <Link
                       to={`/inventory/${i.productVariantId}`}
-                      style={{ textDecoration: 'none', color: 'inherit', fontWeight: 500 }}
+                      style={{
+                        textDecoration: "none",
+                        color: "inherit",
+                        fontWeight: 500,
+                      }}
                     >
                       {i.sku}
                     </Link>
                   </TableCell>
-                  <TableCell>{i.barcode ?? '—'}</TableCell>
+                  <TableCell>{i.barcode ?? "—"}</TableCell>
                   <TableCell>{i.productName}</TableCell>
-                  <TableCell>{i.colourName ?? '—'}</TableCell>
-                  <TableCell>{i.sizeName ?? '—'}</TableCell>
+                  <TableCell>{i.colourName ?? "—"}</TableCell>
+                  <TableCell>{i.sizeName ?? "—"}</TableCell>
                   <TableCell>
-                    <Chip label={i.status} size="small" color={i.status === 'Active' ? 'success' : 'default'} />
+                    <Chip
+                      label={i.status}
+                      size="small"
+                      color={i.status === "Active" ? "success" : "default"}
+                    />
                   </TableCell>
                   <TableCell align="right">{i.quantity}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        )
-      )}
+        ))}
     </Box>
-  )
+  );
 }
