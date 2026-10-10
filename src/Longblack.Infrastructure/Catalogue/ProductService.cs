@@ -13,7 +13,7 @@ public class ProductService(AppDbContext db) : IProductService
     {
         var query = db.Products
             .Include(p => p.Brand)
-            .Include(p => p.Category)
+            .Include(p => p.Category).ThenInclude(c => c!.ParentCategory)
             .AsQueryable();
 
         if (filter.Status is not null)
@@ -49,7 +49,7 @@ public class ProductService(AppDbContext db) : IProductService
     {
         var product = await db.Products
             .Include(p => p.Brand)
-            .Include(p => p.Category)
+            .Include(p => p.Category).ThenInclude(c => c!.ParentCategory)
             .FirstOrDefaultAsync(p => p.Id == id, ct);
 
         return product is null ? null : ToDto(product);
@@ -177,6 +177,6 @@ public class ProductService(AppDbContext db) : IProductService
     private static ProductDto ToDto(Product p) =>
         new(p.Id, p.ProductCode, p.Name, p.Description,
             p.BrandId, p.Brand?.Name,
-            p.CategoryId, p.Category?.Name,
+            p.CategoryId, p.Category?.DisplayName,
             p.Status, p.CreatedAt, p.UpdatedAt, p.CreatedBy, p.UpdatedBy);
 }

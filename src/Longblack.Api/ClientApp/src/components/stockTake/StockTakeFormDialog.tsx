@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../../api/client'
 import type { BrandDto, CategoryDto, StockTakeDto } from '../../api/types'
 import { useSnackbar } from '../../contexts/SnackbarContext'
+import { renderCategoryMenuItems } from '../categories/CategorySelectItems'
 
 interface Props {
   open: boolean
@@ -76,7 +77,7 @@ export function StockTakeFormDialog({ open, onClose }: Props) {
           <InputLabel>Category</InputLabel>
           <Select value={categoryId} label="Category" onChange={(e) => setCategoryId(e.target.value)}>
             <MenuItem value="">Any category</MenuItem>
-            {categories?.map((c) => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+            {renderCategoryMenuItems(categories)}
           </Select>
         </FormControl>
       </DialogContent>

@@ -21,6 +21,7 @@ import { z } from "zod";
 import { api } from "../../api/client";
 import type { BrandDto, CategoryDto, ProductDto } from "../../api/types";
 import { useSnackbar } from "../../contexts/SnackbarContext";
+import { renderCategoryMenuItems } from "../categories/CategorySelectItems";
 
 const schema = z.object({
   productCode: z.string().min(1, "Product Code is required"),
@@ -191,11 +192,7 @@ export function ProductFormDialog({ open, onClose, product }: Props) {
               <InputLabel>Category</InputLabel>
               <Select {...field} label="Category">
                 <MenuItem value="">None</MenuItem>
-                {categories?.map((c) => (
-                  <MenuItem key={c.id} value={c.id}>
-                    {c.name}
-                  </MenuItem>
-                ))}
+                {renderCategoryMenuItems(categories)}
               </Select>
               {errors.categoryId && (
                 <FormHelperText>{errors.categoryId.message}</FormHelperText>

@@ -20,6 +20,7 @@ import { useDeferredValue, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import type { BrandDto, CategoryDto } from "../api/types";
+import { renderCategoryMenuItems } from "../components/categories/CategorySelectItems";
 import type { InventoryDto } from "../api/types";
 
 function useInventory(
@@ -103,7 +104,7 @@ export function InventoryListPage() {
             ))}
           </Select>
         </FormControl>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
+        {/* <FormControl size="small" sx={{ minWidth: 160 }}>
           <InputLabel>Category</InputLabel>
           <Select
             value={categoryId}
@@ -116,6 +117,17 @@ export function InventoryListPage() {
                 {c.name}
               </MenuItem>
             ))}
+          </Select>
+        </FormControl> */}
+        <FormControl sx={{ minWidth: 160 }}>
+          <InputLabel>Category</InputLabel>
+          <Select
+            value={categoryId}
+            label="Category"
+            onChange={(e) => setCategoryId(e.target.value)}
+          >
+            <MenuItem value="">All categories</MenuItem>
+            {renderCategoryMenuItems(categories)}
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 120 }}>

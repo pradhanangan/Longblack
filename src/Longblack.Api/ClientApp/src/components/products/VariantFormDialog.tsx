@@ -38,11 +38,10 @@ interface Props {
   onClose: () => void
   productId: string
   variant?: ProductVariantDto
-  brandCode?: string
-  categoryCode?: string
+  productCode?: string
 }
 
-export function VariantFormDialog({ open, onClose, productId, variant, brandCode, categoryCode }: Props) {
+export function VariantFormDialog({ open, onClose, productId, variant, productCode }: Props) {
   const isEdit = !!variant
   const { showSuccess, showError } = useSnackbar()
   const queryClient = useQueryClient()
@@ -73,16 +72,16 @@ export function VariantFormDialog({ open, onClose, productId, variant, brandCode
   const watchedColourId = useWatch({ control, name: 'colourId' })
   const watchedSizeId = useWatch({ control, name: 'sizeId' })
 
-  // SKU suggestion: compute client-side from brand/category/colour/size codes
+  // SKU suggestion: product code (already unique per product) + colour/size codes
   useEffect(() => {
-    if (isEdit || !brandCode || !categoryCode) return
+    if (isEdit || !productCode) return
     const colour = colours?.find((c) => c.id === watchedColourId)
     const size = sizes?.find((s) => s.id === watchedSizeId)
     if (!colour || !size) return
-    const suggested = `${brandCode}-${categoryCode}-${colour.code}-${size.code}`.toUpperCase()
+    const suggested = `${productCode}-${colour.code}-${size.code}`.toUpperCase()
     const current = getValues('sku')
     if (!current) setValue('sku', suggested)
-  }, [watchedColourId, watchedSizeId, brandCode, categoryCode, colours, sizes, isEdit, getValues, setValue])
+  }, [watchedColourId, watchedSizeId, productCode, colours, sizes, isEdit, getValues, setValue])
 
   useEffect(() => {
     if (open) {

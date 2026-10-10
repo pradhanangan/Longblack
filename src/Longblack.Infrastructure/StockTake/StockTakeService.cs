@@ -16,7 +16,7 @@ public class StockTakeService(AppDbContext db, IInventoryService inventoryServic
     {
         var query = db.StockTakes
             .Include(s => s.Brand)
-            .Include(s => s.Category)
+            .Include(s => s.Category).ThenInclude(c => c!.ParentCategory)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.Status))
@@ -279,7 +279,7 @@ public class StockTakeService(AppDbContext db, IInventoryService inventoryServic
     private async Task<StockTakeEntity?> LoadAsync(Guid id, CancellationToken ct) =>
         await db.StockTakes
             .Include(s => s.Brand)
-            .Include(s => s.Category)
+            .Include(s => s.Category).ThenInclude(c => c!.ParentCategory)
             .Include(s => s.Items).ThenInclude(i => i.ProductVariant).ThenInclude(v => v!.Product)
             .Include(s => s.Items).ThenInclude(i => i.ProductVariant).ThenInclude(v => v!.Colour)
             .Include(s => s.Items).ThenInclude(i => i.ProductVariant).ThenInclude(v => v!.Size)
@@ -314,7 +314,7 @@ public class StockTakeService(AppDbContext db, IInventoryService inventoryServic
         new(s.Id,
             FormatReferenceNumber(s.SequenceNumber),
             s.BrandId, s.Brand?.Name,
-            s.CategoryId, s.Category?.Name,
+            s.CategoryId, s.Category?.DisplayName,
             s.Status,
             s.StartDate, s.CompletionDate, s.CompletedBy,
             s.ApprovedDate, s.ApprovedBy,

@@ -22,6 +22,7 @@ import { useDeferredValue, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import type { BrandDto, CategoryDto, ProductDto } from "../api/types";
+import { renderCategoryMenuItems } from "../components/categories/CategorySelectItems";
 import { ProductFormDialog } from "../components/products/ProductFormDialog";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -133,11 +134,7 @@ export function ProductListPage() {
             onChange={(e) => setCategoryId(e.target.value)}
           >
             <MenuItem value="">All categories</MenuItem>
-            {categories?.map((c) => (
-              <MenuItem key={c.id} value={c.id}>
-                {c.name}
-              </MenuItem>
-            ))}
+            {renderCategoryMenuItems(categories)}
           </Select>
         </FormControl>
         <FormControl sx={{ minWidth: 120 }}>

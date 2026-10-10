@@ -12,4 +12,8 @@ public class Category
     public DateTimeOffset UpdatedAt { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public string UpdatedBy { get; set; } = string.Empty;
+
+    // "Parent / Child" so the UI never shows a bare child name (e.g. "Jeans") without
+    // its parent (e.g. "Men"). Requires ParentCategory to be included by the caller.
+    public string DisplayName => ParentCategory is null ? Name : $"{ParentCategory.Name} / {Name}";
 }

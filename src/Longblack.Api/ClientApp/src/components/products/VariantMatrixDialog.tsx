@@ -46,21 +46,19 @@ interface Props {
   open: boolean
   onClose: () => void
   productId: string
-  brandCode?: string
-  categoryCode?: string
+  productCode?: string
   existingVariants?: ProductVariantDto[]
 }
 
-function buildSku(brandCode: string, categoryCode: string, colourCode: string, sizeCode: string) {
-  return `${brandCode}-${categoryCode}-${colourCode}-${sizeCode}`.toUpperCase()
+function buildSku(productCode: string, colourCode: string, sizeCode: string) {
+  return `${productCode}-${colourCode}-${sizeCode}`.toUpperCase()
 }
 
 export function VariantMatrixDialog({
   open,
   onClose,
   productId,
-  brandCode = '',
-  categoryCode = '',
+  productCode = '',
   existingVariants = [],
 }: Props) {
   const { showSuccess, showError } = useSnackbar()
@@ -132,8 +130,8 @@ export function VariantMatrixDialog({
           sizeId,
           sizeName: size.name,
           sizeCode: size.code,
-          sku: brandCode && categoryCode
-            ? buildSku(brandCode, categoryCode, colour.code, size.code)
+          sku: productCode
+            ? buildSku(productCode, colour.code, size.code)
             : '',
           barcode: '',
           sellingPrice: '',
