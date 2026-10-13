@@ -1,11 +1,11 @@
 namespace Longblack.Api.Models.Receiving;
 
 public record CreateGoodsReceiptRequest(
-    string SupplierCode,
+    Guid SupplierId,
     DateTimeOffset? ReceivedDate);
 
 public record UpdateGoodsReceiptRequest(
-    string SupplierCode,
+    Guid SupplierId,
     DateTimeOffset? ReceivedDate);
 
 public record AddGoodsReceiptLineRequest(
@@ -33,7 +33,10 @@ public record GoodsReceiptLineResponse(
 public record GoodsReceiptResponse(
     Guid Id,
     string ReceiptNumber,
-    string SupplierCode,
+    Guid StoreId,
+    string StoreName,
+    Guid SupplierId,
+    string SupplierName,
     DateTimeOffset ReceivedDate,
     string Status,
     string? ReceivedBy,

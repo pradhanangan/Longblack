@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { BrandDto, CategoryDto, ProductDto } from "../api/types";
 import { renderCategoryMenuItems } from "../components/categories/CategorySelectItems";
@@ -61,6 +61,7 @@ function useCategories() {
 }
 
 export function ProductListPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const canWrite =
     user?.roles.some((r) => r === "Manager" || r === "Admin") ?? false;
@@ -164,25 +165,7 @@ export function ProductListPage() {
             No products match the current filters.
           </Typography>
         ) : (
-          <Table
-            size="small"
-            sx={{
-              "& .MuiTableCell-root": {
-                borderBottomColor: "#dbe4f2",
-                fontSize: "0.8125rem",
-                px: 1.5,
-                py: 1,
-              },
-              "& .MuiTableCell-head": {
-                color: "text.primary",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-              },
-              "& .MuiTableRow-root:hover": {
-                backgroundColor: "#f7faff",
-              },
-            }}
-          >
+          <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Code</TableCell>
@@ -194,19 +177,13 @@ export function ProductListPage() {
             </TableHead>
             <TableBody>
               {products.map((p) => (
-                <TableRow key={p.id} hover>
-                  <TableCell>
-                    <Link
-                      to={`/products/${p.id}`}
-                      style={{
-                        textDecoration: "none",
-                        color: "inherit",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {p.productCode}
-                    </Link>
-                  </TableCell>
+                <TableRow
+                  key={p.id}
+                  hover
+                  onClick={() => navigate(`/products/${p.id}`)}
+                  sx={{ cursor: "pointer" }}
+                >
+                  <TableCell>{p.productCode}</TableCell>
                   <TableCell>{p.name}</TableCell>
                   <TableCell>{p.brandName ?? "—"}</TableCell>
                   <TableCell>{p.categoryName ?? "—"}</TableCell>

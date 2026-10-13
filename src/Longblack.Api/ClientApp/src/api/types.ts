@@ -76,10 +76,26 @@ export interface GoodsReceiptLineDto {
   updatedBy: string
 }
 
+export interface SupplierDto {
+  id: string
+  code: string
+  name: string
+  email: string
+  phone: string
+  status: string
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+  updatedBy: string
+}
+
 export interface GoodsReceiptDto {
   id: string
   receiptNumber: string
-  supplierCode: string
+  storeId: string
+  storeName: string
+  supplierId: string
+  supplierName: string
   receivedDate: string
   status: string
   receivedBy: string | null
@@ -98,6 +114,8 @@ export interface InventoryDto {
   colourName: string | null
   sizeName: string | null
   status: string
+  storeId: string
+  storeName: string
   quantity: number
   updatedAt: string | null
 }
@@ -105,6 +123,8 @@ export interface InventoryDto {
 export interface InventoryTransactionDto {
   id: string
   productVariantId: string
+  storeId: string
+  storeName: string
   type: string
   quantityDelta: number
   sourceType: string
@@ -131,6 +151,8 @@ export interface StockTakeItemDto {
 export interface StockTakeDto {
   id: string
   referenceNumber: string
+  storeId: string
+  storeName: string
   brandId: string | null
   brandName: string | null
   categoryId: string | null
@@ -154,4 +176,50 @@ export interface StockTakeCountDto {
   quantity: number
   countedAt: string
   countedBy: string
+}
+
+export interface StoreDto {
+  id: string
+  name: string
+  type: string
+  status: string
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+  updatedBy: string
+}
+
+export interface StockTransferLineDto {
+  id: string
+  stockTransferId: string
+  productVariantId: string
+  sku: string
+  barcode: string | null
+  productName: string
+  dispatchedQuantity: number
+  receivedQuantity: number | null
+  variance: number | null
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+  updatedBy: string
+}
+
+export interface StockTransferDto {
+  id: string
+  transferNumber: string
+  sourceStoreId: string
+  sourceStoreName: string
+  destinationStoreId: string
+  destinationStoreName: string
+  status: string
+  dispatchedDate: string | null
+  dispatchedBy: string | null
+  receivedDate: string | null
+  receivedBy: string | null
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+  updatedBy: string
+  lines: StockTransferLineDto[]
 }

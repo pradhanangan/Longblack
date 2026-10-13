@@ -4,15 +4,22 @@ using Longblack.Application.Catalogue.Colours;
 using Longblack.Application.Catalogue.Products;
 using Longblack.Application.Catalogue.ProductVariants;
 using Longblack.Application.Catalogue.Sizes;
+using Longblack.Application.Catalogue.Suppliers;
+using Longblack.Application.Dashboard;
 using Longblack.Application.Inventory;
 using Longblack.Application.Receiving.GoodsReceipts;
 using Longblack.Application.StockTake;
+using Longblack.Application.StockTransfers;
+using Longblack.Application.Stores;
 using Longblack.Domain.Identity;
 using Longblack.Infrastructure.Catalogue;
+using Longblack.Infrastructure.Dashboard;
 using Longblack.Infrastructure.Inventory;
 using Longblack.Infrastructure.Persistence;
 using Longblack.Infrastructure.Receiving;
 using Longblack.Infrastructure.StockTake;
+using Longblack.Infrastructure.StockTransfers;
+using Longblack.Infrastructure.Stores;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -48,9 +55,13 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IProductVariantService, ProductVariantService>();
         services.AddScoped<ISizeService, SizeService>();
+        services.AddScoped<ISupplierService, SupplierService>();
         services.AddScoped<IInventoryService, InventoryService>();
+        services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IGoodsReceiptService, GoodsReceiptService>();
         services.AddScoped<IStockTakeService, StockTakeService>();
+        services.AddScoped<IStoreService, StoreService>();
+        services.AddScoped<IStockTransferService, StockTransferService>();
 
         return services;
     }

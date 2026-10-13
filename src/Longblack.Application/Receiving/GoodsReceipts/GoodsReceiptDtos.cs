@@ -16,7 +16,10 @@ public record GoodsReceiptLineDto(
 public record GoodsReceiptDto(
     Guid Id,
     string ReceiptNumber,
-    string SupplierCode,
+    Guid StoreId,
+    string StoreName,
+    Guid SupplierId,
+    string SupplierName,
     DateTimeOffset ReceivedDate,
     string Status,
     string? ReceivedBy,
@@ -27,12 +30,12 @@ public record GoodsReceiptDto(
     IReadOnlyList<GoodsReceiptLineDto> Lines);
 
 public record CreateGoodsReceiptDto(
-    string SupplierCode,
+    Guid SupplierId,
     DateTimeOffset? ReceivedDate);
 
 // Header fields are only editable while the receipt is Draft.
 public record UpdateGoodsReceiptDto(
-    string SupplierCode,
+    Guid SupplierId,
     DateTimeOffset? ReceivedDate);
 
 public record AddGoodsReceiptLineDto(
@@ -46,4 +49,4 @@ public record UpdateGoodsReceiptLineDto(
 
 public record ListGoodsReceiptsFilter(
     string? Status,
-    string? SupplierCode);
+    Guid? SupplierId);

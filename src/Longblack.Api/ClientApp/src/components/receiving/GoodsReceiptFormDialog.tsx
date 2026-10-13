@@ -6,19 +6,24 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  FormHelperText,
+  InputLabel,
+  MenuItem,
+  Select,
   TextField,
 } from '@mui/material'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { api } from '../../api/client'
-import type { GoodsReceiptDto } from '../../api/types'
+import type { GoodsReceiptDto, SupplierDto } from '../../api/types'
 import { useSnackbar } from '../../contexts/SnackbarContext'
 
 const schema = z.object({
-  supplierCode: z.string().min(1, 'Supplier Code is required').max(50, 'Max 50 characters'),
+  supplierId: z.string().min(1, 'Supplier is required'),
   receivedDate: z.string().min(1, 'Received Date is required'),
 })
 
@@ -41,9 +46,16 @@ export function GoodsReceiptFormDialog({ open, onClose, goodsReceipt }: Props) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
+  const { data: suppliers } = useQuery<SupplierDto[]>({
+    queryKey: ['suppliers', 'Active'],
+    queryFn: () => api.get('/api/suppliers?status=Active'),
+    staleTime: 5 * 60_000,
+  })
+
   const {
-    register,
     handleSubmit,
+    control,
+    register,
     reset,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
@@ -51,7 +63,7 @@ export function GoodsReceiptFormDialog({ open, onClose, goodsReceipt }: Props) {
   useEffect(() => {
     if (open) {
       reset({
-        supplierCode: goodsReceipt?.supplierCode ?? '',
+        supplierId: goodsReceipt?.supplierId ?? '',
         receivedDate: toDateInputValue(goodsReceipt?.receivedDate),
       })
     }
@@ -59,7 +71,7 @@ export function GoodsReceiptFormDialog({ open, onClose, goodsReceipt }: Props) {
 
   const mutation = useMutation({
     mutationFn: (values: FormValues) => {
-      const body = { supplierCode: values.supplierCode, receivedDate: new Date(values.receivedDate).toISOString() }
+      const body = { supplierId: values.supplierId, receivedDate: new Date(values.receivedDate).toISOString() }
       return isEdit
         ? api.put<GoodsReceiptDto>(`/api/goods-receipts/${goodsReceipt!.id}`, body)
         : api.post<GoodsReceiptDto>('/api/goods-receipts', body)
@@ -80,13 +92,22 @@ export function GoodsReceiptFormDialog({ open, onClose, goodsReceipt }: Props) {
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{isEdit ? 'Edit Goods Receipt' : 'New Goods Receipt'}</DialogTitle>
       <DialogContent>
-        <TextField
-          label="Supplier Code"
-          fullWidth
-          margin="normal"
-          {...register('supplierCode')}
-          error={!!errors.supplierCode}
-          helperText={errors.supplierCode?.message}
+        <Controller
+          name="supplierId"
+          control={control}
+          render={({ field }) => (
+            <FormControl fullWidth margin="normal" error={!!errors.supplierId}>
+              <InputLabel>Supplier</InputLabel>
+              <Select {...field} label="Supplier">
+                {suppliers?.map((s) => (
+                  <MenuItem key={s.id} value={s.id}>
+                    {s.name}
+                  </MenuItem>
+                ))}
+              </Select>
+              {errors.supplierId && <FormHelperText>{errors.supplierId.message}</FormHelperText>}
+            </FormControl>
+          )}
         />
         <TextField
           label="Received Date"

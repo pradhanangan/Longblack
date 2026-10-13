@@ -31,7 +31,7 @@ public class StockTakesController(IStockTakeService stockTakeService) : ApiContr
         try
         {
             var stockTake = await stockTakeService.CreateAsync(
-                new CreateStockTakeDto(request.BrandId, request.CategoryId), CurrentUser, ct);
+                new CreateStockTakeDto(request.StoreId, request.BrandId, request.CategoryId), CurrentUser, ct);
             return CreatedAtAction(nameof(GetById), new { id = stockTake.Id }, ToResponse(stockTake));
         }
         catch (Exception ex)
@@ -161,7 +161,7 @@ public class StockTakesController(IStockTakeService stockTakeService) : ApiContr
     }
 
     private static StockTakeResponse ToResponse(StockTakeDto dto) =>
-        new(dto.Id, dto.ReferenceNumber, dto.BrandId, dto.BrandName, dto.CategoryId, dto.CategoryName,
+        new(dto.Id, dto.ReferenceNumber, dto.StoreId, dto.StoreName, dto.BrandId, dto.BrandName, dto.CategoryId, dto.CategoryName,
             dto.Status, dto.StartDate, dto.CompletionDate, dto.CompletedBy, dto.ApprovedDate, dto.ApprovedBy,
             dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy,
             dto.Items.Select(i => new StockTakeItemResponse(

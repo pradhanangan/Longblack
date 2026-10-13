@@ -14,7 +14,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../api/client'
-import type { BrandDto, CategoryDto, StockTakeDto } from '../../api/types'
+import type { BrandDto, CategoryDto, StockTakeDto, StoreDto } from '../../api/types'
 import { useSnackbar } from '../../contexts/SnackbarContext'
 import { renderCategoryMenuItems } from '../categories/CategorySelectItems'
 
@@ -30,8 +30,15 @@ export function StockTakeFormDialog({ open, onClose }: Props) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
+  const [storeId, setStoreId] = useState('')
   const [brandId, setBrandId] = useState('')
   const [categoryId, setCategoryId] = useState('')
+
+  const { data: stores } = useQuery<StoreDto[]>({
+    queryKey: ['stores', 'Active'],
+    queryFn: () => api.get('/api/stores?status=Active'),
+    staleTime: 5 * 60_000,
+  })
 
   const { data: brands } = useQuery<BrandDto[]>({
     queryKey: ['brands'],
@@ -48,12 +55,14 @@ export function StockTakeFormDialog({ open, onClose }: Props) {
   const mutation = useMutation({
     mutationFn: () =>
       api.post<StockTakeDto>('/api/stock-takes', {
+        storeId,
         brandId: brandId || null,
         categoryId: categoryId || null,
       }),
     onSuccess: (data: StockTakeDto) => {
       queryClient.invalidateQueries({ queryKey: ['stock-takes'] })
       showSuccess('Stock Take created.')
+      setStoreId('')
       setBrandId('')
       setCategoryId('')
       onClose()
@@ -66,6 +75,12 @@ export function StockTakeFormDialog({ open, onClose }: Props) {
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>New Stock Take</DialogTitle>
       <DialogContent>
+        <FormControl fullWidth margin="normal" required>
+          <InputLabel>Store</InputLabel>
+          <Select value={storeId} label="Store" onChange={(e) => setStoreId(e.target.value)}>
+            {stores?.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
+          </Select>
+        </FormControl>
         <FormControl fullWidth margin="normal">
           <InputLabel>Brand</InputLabel>
           <Select value={brandId} label="Brand" onChange={(e) => setBrandId(e.target.value)}>
@@ -86,7 +101,7 @@ export function StockTakeFormDialog({ open, onClose }: Props) {
         <Button
           variant="contained"
           onClick={() => mutation.mutate()}
-          disabled={mutation.isPending}
+          disabled={mutation.isPending || !storeId}
           startIcon={mutation.isPending ? <CircularProgress size={16} /> : undefined}
         >
           Create

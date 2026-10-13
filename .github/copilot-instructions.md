@@ -21,7 +21,7 @@ The React frontend lives at `src/Longblack.Api/ClientApp/` and is built as stati
 
 - **ProductVariant** identifies _what_ a stock item is (the countable SKU).
 - **GoodsReceipt** records _what arrived_ (with purchase cost per line).
-- **Inventory** records _what the system currently has_ (one row per variant, quantity only).
+- **Inventory** records _what the system currently has_ (one row per variant per Store, quantity only).
 - **StockTake** records _what was physically counted_ and drives adjustments.
 - Inventory changes must always create an `InventoryTransaction` record (traceable source + user).
 - Purchase cost lives on `GoodsReceiptLine`, not on the product or variant.
@@ -56,7 +56,7 @@ npm run lint      # oxlint
 - **Implicit usings** are enabled — no need to add common `using` directives manually.
 - API routes follow the pattern `/api/{resource}` (e.g., `/api/products`, `/api/goods-receipts`).
 - Database schema uses **snake_case** table and column names (e.g., `product_variants`, `goods_receipt_lines`).
-- The architecture must accommodate future multi-store support: `Inventory` should be designed so a `location_id`/`store_id` FK can be added later without breaking existing data.
+- Multi-store is implemented: `Inventory` is one row per variant per `Store`, and stock moves between Stores via Stock Transfers (see `docs/stocktake-prd.md` §8.1).
 - Status fields use **string enums** defined in the domain (e.g., `Draft`, `Received`, `Cancelled` for `GoodsReceipt`).
 - Audit fields (`CreatedBy`, `CreatedAt`, `UpdatedBy`, `UpdatedAt`) are required on all transactional entities.
 
@@ -75,4 +75,4 @@ npm run lint      # oxlint
 
 ## What Is Intentionally Out of Scope (MVP)
 
-Do not implement: multi-store, purchase orders, sales/POS, customer management, promotions, native mobile apps, or container orchestration. See `docs/stocktake-prd.md` section 2.2 for the full list.
+Do not implement: purchase orders, sales/POS, customer management, promotions, native mobile apps, or container orchestration. See `docs/stocktake-prd.md` section 2.2 for the full list.

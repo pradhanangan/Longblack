@@ -14,17 +14,18 @@ public class InventoryController(IInventoryService inventoryService) : ApiContro
         [FromQuery] Guid? brandId,
         [FromQuery] Guid? categoryId,
         [FromQuery] string? status,
+        [FromQuery] Guid? storeId,
         CancellationToken ct)
     {
-        var filter = new ListInventoryFilter(q, brandId, categoryId, status);
+        var filter = new ListInventoryFilter(q, brandId, categoryId, status, storeId);
         var inventory = await inventoryService.ListAsync(filter, ct);
         return Ok(inventory.Select(ToResponse));
     }
 
     [HttpGet("{productVariantId:guid}")]
-    public async Task<IActionResult> GetByVariantId(Guid productVariantId, CancellationToken ct)
+    public async Task<IActionResult> GetByVariantId(Guid productVariantId, [FromQuery] Guid? storeId, CancellationToken ct)
     {
-        var inventory = await inventoryService.GetByVariantIdAsync(productVariantId, ct);
+        var inventory = await inventoryService.GetByVariantIdAsync(productVariantId, storeId, ct);
         return inventory is null ? NotFound() : Ok(ToResponse(inventory));
     }
 
@@ -33,10 +34,10 @@ public class InventoryController(IInventoryService inventoryService) : ApiContro
     {
         var transactions = await inventoryService.GetTransactionsAsync(productVariantId, ct);
         return Ok(transactions.Select(t => new InventoryTransactionResponse(
-            t.Id, t.ProductVariantId, t.Type, t.QuantityDelta, t.SourceType, t.SourceId, t.CreatedAt, t.CreatedBy)));
+            t.Id, t.ProductVariantId, t.StoreId, t.StoreName, t.Type, t.QuantityDelta, t.SourceType, t.SourceId, t.CreatedAt, t.CreatedBy)));
     }
 
     private static InventoryResponse ToResponse(InventoryDto dto) =>
         new(dto.ProductVariantId, dto.Sku, dto.Barcode, dto.ProductName,
-            dto.ColourName, dto.SizeName, dto.Status, dto.Quantity, dto.UpdatedAt);
+            dto.ColourName, dto.SizeName, dto.Status, dto.StoreId, dto.StoreName, dto.Quantity, dto.UpdatedAt);
 }

@@ -114,8 +114,10 @@ export function GoodsReceiptDetailPage() {
           maxWidth: 600,
         }}
       >
-        <Typography color="text.secondary">Supplier Code</Typography>
-        <Typography>{receipt.supplierCode}</Typography>
+        <Typography color="text.secondary">Store</Typography>
+        <Typography>{receipt.storeName}</Typography>
+        <Typography color="text.secondary">Supplier</Typography>
+        <Typography>{receipt.supplierName}</Typography>
         <Typography color="text.secondary">Received Date</Typography>
         <Typography>
           {new Date(receipt.receivedDate).toLocaleDateString()}

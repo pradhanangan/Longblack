@@ -2,6 +2,8 @@ using Longblack.Domain.Catalogue;
 using Longblack.Domain.Identity;
 using Longblack.Domain.Inventory;
 using Longblack.Domain.Receiving;
+using Longblack.Domain.StockTransfers;
+using Longblack.Domain.Stores;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using StockTakeEntity = Longblack.Domain.StockTake.StockTake;
@@ -17,6 +19,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
     public DbSet<Size> Sizes => Set<Size>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<GoodsReceipt> GoodsReceipts => Set<GoodsReceipt>();
     public DbSet<GoodsReceiptLine> GoodsReceiptLines => Set<GoodsReceiptLine>();
     public DbSet<Longblack.Domain.Inventory.Inventory> Inventory => Set<Longblack.Domain.Inventory.Inventory>();
@@ -24,6 +27,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<StockTakeEntity> StockTakes => Set<StockTakeEntity>();
     public DbSet<Longblack.Domain.StockTake.StockTakeItem> StockTakeItems => Set<Longblack.Domain.StockTake.StockTakeItem>();
     public DbSet<Longblack.Domain.StockTake.StockTakeCount> StockTakeCounts => Set<Longblack.Domain.StockTake.StockTakeCount>();
+    public DbSet<Store> Stores => Set<Store>();
+    public DbSet<StockTransfer> StockTransfers => Set<StockTransfer>();
+    public DbSet<StockTransferLine> StockTransferLines => Set<StockTransferLine>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -73,6 +79,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
              .IsRequired(false);
         });
 
+        // Supplier
+        builder.Entity<Supplier>(e =>
+        {
+            e.ToTable("suppliers");
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Id).HasColumnName("id");
+            e.Property(s => s.Code).HasColumnName("code").IsRequired();
+            e.Property(s => s.Name).HasColumnName("name").IsRequired();
+            e.Property(s => s.Email).HasColumnName("email").IsRequired();
+            e.Property(s => s.Phone).HasColumnName("phone").IsRequired();
+            e.Property(s => s.Status).HasColumnName("status").IsRequired();
+            e.Property(s => s.CreatedAt).HasColumnName("created_at");
+            e.Property(s => s.UpdatedAt).HasColumnName("updated_at");
+            e.Property(s => s.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(s => s.UpdatedBy).HasColumnName("updated_by").IsRequired();
+        });
+
         // Colour
         builder.Entity<Colour>(e =>
         {
@@ -97,6 +120,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(s => s.Name).HasColumnName("name").IsRequired();
             e.Property(s => s.Code).HasColumnName("code").IsRequired();
             e.Property(s => s.SortOrder).HasColumnName("sort_order");
+            e.Property(s => s.Status).HasColumnName("status").IsRequired();
+            e.Property(s => s.CreatedAt).HasColumnName("created_at");
+            e.Property(s => s.UpdatedAt).HasColumnName("updated_at");
+            e.Property(s => s.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(s => s.UpdatedBy).HasColumnName("updated_by").IsRequired();
+        });
+
+        // Store
+        builder.Entity<Store>(e =>
+        {
+            e.ToTable("stores");
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Id).HasColumnName("id");
+            e.Property(s => s.Name).HasColumnName("name").IsRequired();
+            e.Property(s => s.Type).HasColumnName("type").IsRequired();
             e.Property(s => s.Status).HasColumnName("status").IsRequired();
             e.Property(s => s.CreatedAt).HasColumnName("created_at");
             e.Property(s => s.UpdatedAt).HasColumnName("updated_at");
@@ -160,7 +198,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .HasDefaultValueSql("nextval('goods_receipt_seq')")
                 .ValueGeneratedOnAdd();
             e.HasIndex(g => g.SequenceNumber).IsUnique();
-            e.Property(g => g.SupplierCode).HasColumnName("supplier_code").IsRequired().HasMaxLength(50);
+            e.Property(g => g.StoreId).HasColumnName("store_id");
+            e.Property(g => g.SupplierId).HasColumnName("supplier_id");
             e.Property(g => g.ReceivedDate).HasColumnName("received_date").IsRequired();
             e.Property(g => g.Status).HasColumnName("status").IsRequired();
             e.Property(g => g.ReceivedBy).HasColumnName("received_by");
@@ -168,6 +207,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(g => g.UpdatedAt).HasColumnName("updated_at");
             e.Property(g => g.CreatedBy).HasColumnName("created_by").IsRequired();
             e.Property(g => g.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasOne(g => g.Store).WithMany().HasForeignKey(g => g.StoreId);
+            e.HasOne(g => g.Supplier).WithMany().HasForeignKey(g => g.SupplierId);
             e.HasMany(g => g.Lines).WithOne(l => l.GoodsReceipt).HasForeignKey(l => l.GoodsReceiptId);
         });
 
@@ -195,13 +236,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.HasKey(i => i.Id);
             e.Property(i => i.Id).HasColumnName("id");
             e.Property(i => i.ProductVariantId).HasColumnName("product_variant_id");
+            e.Property(i => i.StoreId).HasColumnName("store_id");
             e.Property(i => i.Quantity).HasColumnName("quantity").IsRequired();
             e.Property(i => i.CreatedAt).HasColumnName("created_at");
             e.Property(i => i.UpdatedAt).HasColumnName("updated_at");
             e.Property(i => i.CreatedBy).HasColumnName("created_by").IsRequired();
             e.Property(i => i.UpdatedBy).HasColumnName("updated_by").IsRequired();
-            e.HasIndex(i => i.ProductVariantId).IsUnique();
+            e.HasIndex(i => new { i.ProductVariantId, i.StoreId }).IsUnique();
             e.HasOne(i => i.ProductVariant).WithMany().HasForeignKey(i => i.ProductVariantId);
+            e.HasOne(i => i.Store).WithMany().HasForeignKey(i => i.StoreId);
         });
 
         // InventoryTransaction
@@ -211,6 +254,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.HasKey(t => t.Id);
             e.Property(t => t.Id).HasColumnName("id");
             e.Property(t => t.ProductVariantId).HasColumnName("product_variant_id");
+            e.Property(t => t.StoreId).HasColumnName("store_id");
             e.Property(t => t.Type).HasColumnName("type").IsRequired();
             e.Property(t => t.QuantityDelta).HasColumnName("quantity_delta").IsRequired();
             e.Property(t => t.SourceType).HasColumnName("source_type").IsRequired();
@@ -218,6 +262,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(t => t.CreatedAt).HasColumnName("created_at");
             e.Property(t => t.CreatedBy).HasColumnName("created_by").IsRequired();
             e.HasOne(t => t.ProductVariant).WithMany().HasForeignKey(t => t.ProductVariantId);
+            e.HasOne(t => t.Store).WithMany().HasForeignKey(t => t.StoreId);
             e.HasIndex(t => new { t.SourceType, t.SourceId });
         });
 
@@ -235,6 +280,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .HasDefaultValueSql("nextval('stock_take_seq')")
                 .ValueGeneratedOnAdd();
             e.HasIndex(s => s.SequenceNumber).IsUnique();
+            e.Property(s => s.StoreId).HasColumnName("store_id");
             e.Property(s => s.BrandId).HasColumnName("brand_id");
             e.Property(s => s.CategoryId).HasColumnName("category_id");
             e.Property(s => s.Status).HasColumnName("status").IsRequired();
@@ -247,6 +293,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(s => s.UpdatedAt).HasColumnName("updated_at");
             e.Property(s => s.CreatedBy).HasColumnName("created_by").IsRequired();
             e.Property(s => s.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasOne(s => s.Store).WithMany().HasForeignKey(s => s.StoreId);
             e.HasOne(s => s.Brand).WithMany().HasForeignKey(s => s.BrandId).IsRequired(false);
             e.HasOne(s => s.Category).WithMany().HasForeignKey(s => s.CategoryId).IsRequired(false);
             e.HasMany(s => s.Items).WithOne(i => i.StockTake).HasForeignKey(i => i.StockTakeId);
@@ -281,6 +328,55 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(c => c.Quantity).HasColumnName("quantity").IsRequired();
             e.Property(c => c.CountedAt).HasColumnName("counted_at");
             e.Property(c => c.CountedBy).HasColumnName("counted_by").IsRequired();
+        });
+
+        // Backs StockTransfer.SequenceNumber so transfer numbers (TR-0001) are assigned atomically by Postgres.
+        builder.HasSequence<int>("stock_transfer_seq").StartsAt(1);
+
+        // StockTransfer
+        builder.Entity<StockTransfer>(e =>
+        {
+            e.ToTable("stock_transfers");
+            e.HasKey(t => t.Id);
+            e.Property(t => t.Id).HasColumnName("id");
+            e.Property(t => t.SequenceNumber)
+                .HasColumnName("sequence_number")
+                .HasDefaultValueSql("nextval('stock_transfer_seq')")
+                .ValueGeneratedOnAdd();
+            e.HasIndex(t => t.SequenceNumber).IsUnique();
+            e.Property(t => t.SourceStoreId).HasColumnName("source_store_id");
+            e.Property(t => t.DestinationStoreId).HasColumnName("destination_store_id");
+            e.Property(t => t.Status).HasColumnName("status").IsRequired();
+            e.Property(t => t.DispatchedDate).HasColumnName("dispatched_date");
+            e.Property(t => t.DispatchedBy).HasColumnName("dispatched_by");
+            e.Property(t => t.ReceivedDate).HasColumnName("received_date");
+            e.Property(t => t.ReceivedBy).HasColumnName("received_by");
+            e.Property(t => t.CreatedAt).HasColumnName("created_at");
+            e.Property(t => t.UpdatedAt).HasColumnName("updated_at");
+            e.Property(t => t.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(t => t.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasOne(t => t.SourceStore).WithMany().HasForeignKey(t => t.SourceStoreId);
+            e.HasOne(t => t.DestinationStore).WithMany().HasForeignKey(t => t.DestinationStoreId);
+            e.HasMany(t => t.Lines).WithOne(l => l.StockTransfer).HasForeignKey(l => l.StockTransferId);
+        });
+
+        // StockTransferLine — unique per (StockTransferId, ProductVariantId): at most one line per
+        // variant per transfer.
+        builder.Entity<StockTransferLine>(e =>
+        {
+            e.ToTable("stock_transfer_lines");
+            e.HasKey(l => l.Id);
+            e.Property(l => l.Id).HasColumnName("id");
+            e.Property(l => l.StockTransferId).HasColumnName("stock_transfer_id");
+            e.Property(l => l.ProductVariantId).HasColumnName("product_variant_id");
+            e.Property(l => l.DispatchedQuantity).HasColumnName("dispatched_quantity").IsRequired();
+            e.Property(l => l.ReceivedQuantity).HasColumnName("received_quantity");
+            e.Property(l => l.CreatedAt).HasColumnName("created_at");
+            e.Property(l => l.UpdatedAt).HasColumnName("updated_at");
+            e.Property(l => l.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(l => l.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasIndex(l => new { l.StockTransferId, l.ProductVariantId }).IsUnique();
+            e.HasOne(l => l.ProductVariant).WithMany().HasForeignKey(l => l.ProductVariantId);
         });
     }
 }

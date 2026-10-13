@@ -14,14 +14,15 @@ import {
   Typography,
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { InventoryDto, InventoryTransactionDto } from "../api/types";
 
-function useInventoryDetail(productVariantId: string) {
+function useInventoryDetail(productVariantId: string, storeId: string | null) {
+  const qs = storeId ? `?storeId=${storeId}` : "";
   return useQuery<InventoryDto>({
-    queryKey: ["inventory", productVariantId],
-    queryFn: () => api.get(`/api/inventory/${productVariantId}`),
+    queryKey: ["inventory", productVariantId, storeId],
+    queryFn: () => api.get(`/api/inventory/${productVariantId}${qs}`),
   });
 }
 
@@ -34,12 +35,14 @@ function useTransactions(productVariantId: string) {
 
 export function InventoryDetailPage() {
   const { productVariantId } = useParams<{ productVariantId: string }>();
+  const [searchParams] = useSearchParams();
+  const storeId = searchParams.get("storeId");
 
   const {
     data: inventory,
     isLoading,
     isError,
-  } = useInventoryDetail(productVariantId!);
+  } = useInventoryDetail(productVariantId!, storeId);
   const {
     data: transactions,
     isLoading: transactionsLoading,
@@ -76,6 +79,8 @@ export function InventoryDetailPage() {
       >
         <Typography color="text.secondary">Product</Typography>
         <Typography>{inventory.productName}</Typography>
+        <Typography color="text.secondary">Store</Typography>
+        <Typography>{inventory.storeName}</Typography>
         <Typography color="text.secondary">Barcode</Typography>
         <Typography>{inventory.barcode ?? "—"}</Typography>
         <Typography color="text.secondary">Colour</Typography>
@@ -115,6 +120,7 @@ export function InventoryDetailPage() {
             <TableHead>
               <TableRow>
                 <TableCell>Date</TableCell>
+                <TableCell>Store</TableCell>
                 <TableCell>Type</TableCell>
                 <TableCell align="right">Quantity Delta</TableCell>
                 <TableCell>Source</TableCell>
@@ -127,6 +133,7 @@ export function InventoryDetailPage() {
                   <TableCell>
                     {new Date(t.createdAt).toLocaleString()}
                   </TableCell>
+                  <TableCell>{t.storeName}</TableCell>
                   <TableCell>{t.type}</TableCell>
                   <TableCell
                     align="right"

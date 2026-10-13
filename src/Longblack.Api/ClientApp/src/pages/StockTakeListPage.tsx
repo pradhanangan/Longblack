@@ -16,9 +16,9 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import type { StockTakeDto } from "../api/types";
 import { StockTakeFormDialog } from "../components/stockTake/StockTakeFormDialog";
@@ -44,6 +44,7 @@ function useStockTakes(status: string) {
 }
 
 export function StockTakeListPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const canCreate =
     user?.roles.some(
@@ -113,6 +114,7 @@ export function StockTakeListPage() {
             <TableHead>
               <TableRow>
                 <TableCell>Reference #</TableCell>
+                <TableCell>Store</TableCell>
                 <TableCell>Brand</TableCell>
                 <TableCell>Category</TableCell>
                 <TableCell>Status</TableCell>
@@ -122,19 +124,14 @@ export function StockTakeListPage() {
             </TableHead>
             <TableBody>
               {stockTakes.map((s) => (
-                <TableRow key={s.id} hover>
-                  <TableCell>
-                    <Link
-                      to={`/stock-takes/${s.id}`}
-                      style={{
-                        textDecoration: "none",
-                        color: "inherit",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {s.referenceNumber}
-                    </Link>
-                  </TableCell>
+                <TableRow
+                  key={s.id}
+                  hover
+                  onClick={() => navigate(`/stock-takes/${s.id}`)}
+                  sx={{ cursor: "pointer" }}
+                >
+                  <TableCell>{s.referenceNumber}</TableCell>
+                  <TableCell>{s.storeName}</TableCell>
                   <TableCell>{s.brandName ?? "Any"}</TableCell>
                   <TableCell>{s.categoryName ?? "Any"}</TableCell>
                   <TableCell>

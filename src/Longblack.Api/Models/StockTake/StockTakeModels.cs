@@ -1,6 +1,7 @@
 namespace Longblack.Api.Models.StockTake;
 
 public record CreateStockTakeRequest(
+    Guid StoreId,
     Guid? BrandId,
     Guid? CategoryId);
 
@@ -24,6 +25,8 @@ public record StockTakeItemResponse(
 public record StockTakeResponse(
     Guid Id,
     string ReferenceNumber,
+    Guid StoreId,
+    string StoreName,
     Guid? BrandId,
     string? BrandName,
     Guid? CategoryId,

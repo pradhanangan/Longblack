@@ -13,15 +13,14 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Toolbar,
   Typography,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useDeferredValue, useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import { api } from "../api/client";
-import type { GoodsReceiptDto } from "../api/types";
+import type { GoodsReceiptDto, SupplierDto } from "../api/types";
 import { GoodsReceiptFormDialog } from "../components/receiving/GoodsReceiptFormDialog";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -31,18 +30,27 @@ function statusColor(status: string): "default" | "success" | "error" {
   return "default";
 }
 
-function useGoodsReceipts(status: string, supplierCode: string) {
+function useGoodsReceipts(status: string, supplierId: string) {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
-  if (supplierCode) params.set("supplierCode", supplierCode);
+  if (supplierId) params.set("supplierId", supplierId);
   const qs = params.toString();
   return useQuery<GoodsReceiptDto[]>({
-    queryKey: ["goods-receipts", status, supplierCode],
+    queryKey: ["goods-receipts", status, supplierId],
     queryFn: () => api.get(`/api/goods-receipts${qs ? `?${qs}` : ""}`),
   });
 }
 
+function useSuppliers() {
+  return useQuery<SupplierDto[]>({
+    queryKey: ["suppliers", "Active"],
+    queryFn: () => api.get("/api/suppliers?status=Active"),
+    staleTime: 5 * 60_000,
+  });
+}
+
 export function GoodsReceiptListPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const canCreate =
     user?.roles.some(
@@ -50,15 +58,15 @@ export function GoodsReceiptListPage() {
     ) ?? false;
 
   const [status, setStatus] = useState("");
-  const [supplierCodeInput, setSupplierCodeInput] = useState("");
+  const [supplierId, setSupplierId] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
 
-  const deferredSupplierCode = useDeferredValue(supplierCodeInput);
   const {
     data: receipts,
     isLoading,
     isError,
-  } = useGoodsReceipts(status, deferredSupplierCode);
+  } = useGoodsReceipts(status, supplierId);
+  const { data: suppliers } = useSuppliers();
 
   return (
     <Box>
@@ -84,13 +92,21 @@ export function GoodsReceiptListPage() {
       />
 
       <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
-        <TextField
-          label="Supplier Code"
-          size="small"
-          value={supplierCodeInput}
-          onChange={(e) => setSupplierCodeInput(e.target.value)}
-          sx={{ minWidth: 200 }}
-        />
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel>Supplier</InputLabel>
+          <Select
+            value={supplierId}
+            label="Supplier"
+            onChange={(e) => setSupplierId(e.target.value)}
+          >
+            <MenuItem value="">All suppliers</MenuItem>
+            {suppliers?.map((s) => (
+              <MenuItem key={s.id} value={s.id}>
+                {s.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <FormControl size="small" sx={{ minWidth: 140 }}>
           <InputLabel>Status</InputLabel>
           <Select
@@ -123,27 +139,21 @@ export function GoodsReceiptListPage() {
             <TableHead>
               <TableRow>
                 <TableCell>Receipt #</TableCell>
-                <TableCell>Supplier Code</TableCell>
+                <TableCell>Supplier</TableCell>
                 <TableCell>Received Date</TableCell>
                 <TableCell>Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {receipts.map((r) => (
-                <TableRow key={r.id} hover>
-                  <TableCell>
-                    <Link
-                      to={`/goods-receipts/${r.id}`}
-                      style={{
-                        textDecoration: "none",
-                        color: "inherit",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {r.receiptNumber}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{r.supplierCode}</TableCell>
+                <TableRow
+                  key={r.id}
+                  hover
+                  onClick={() => navigate(`/goods-receipts/${r.id}`)}
+                  sx={{ cursor: "pointer" }}
+                >
+                  <TableCell>{r.receiptNumber}</TableCell>
+                  <TableCell>{r.supplierName}</TableCell>
                   <TableCell>
                     {new Date(r.receivedDate).toLocaleDateString()}
                   </TableCell>
@@ -162,3 +172,4 @@ export function GoodsReceiptListPage() {
     </Box>
   );
 }
+

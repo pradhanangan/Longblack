@@ -4,9 +4,11 @@ public class Inventory
 {
     public Guid Id { get; set; }
 
-    // Unique per variant — single-store MVP. A future location_id can be added without breaking this row shape.
+    // Unique per (ProductVariantId, StoreId) — one row per variant per Store.
     public Guid ProductVariantId { get; set; }
     public Catalogue.ProductVariant? ProductVariant { get; set; }
+    public Guid StoreId { get; set; }
+    public Stores.Store? Store { get; set; }
     public int Quantity { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }

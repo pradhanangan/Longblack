@@ -17,6 +17,8 @@ public record StockTakeItemDto(
 public record StockTakeDto(
     Guid Id,
     string ReferenceNumber,
+    Guid StoreId,
+    string StoreName,
     Guid? BrandId,
     string? BrandName,
     Guid? CategoryId,
@@ -41,6 +43,7 @@ public record StockTakeCountDto(
     string CountedBy);
 
 public record CreateStockTakeDto(
+    Guid StoreId,
     Guid? BrandId,
     Guid? CategoryId);
 

@@ -15,11 +15,11 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useDeferredValue, useState } from "react";
-import { Link } from "react-router-dom";
+import { useDeferredValue, useEffect, useState } from "react";
 import { api } from "../api/client";
-import type { BrandDto, CategoryDto } from "../api/types";
+import type { BrandDto, CategoryDto, StoreDto } from "../api/types";
 import { renderCategoryMenuItems } from "../components/categories/CategorySelectItems";
 import type { InventoryDto } from "../api/types";
 
@@ -28,16 +28,18 @@ function useInventory(
   brandId: string,
   categoryId: string,
   status: string,
+  storeId: string,
 ) {
   const params = new URLSearchParams();
   if (q) params.set("q", q);
   if (brandId) params.set("brandId", brandId);
   if (categoryId) params.set("categoryId", categoryId);
+  if (storeId) params.set("storeId", storeId);
   // Always sent (Active/Inactive/All) — unlike Products, "All" must be an explicit value the
   // backend can distinguish from "not provided" (which defaults to Active).
   params.set("status", status);
   return useQuery<InventoryDto[]>({
-    queryKey: ["inventory", q, brandId, categoryId, status],
+    queryKey: ["inventory", q, brandId, categoryId, status, storeId],
     queryFn: () => api.get(`/api/inventory?${params.toString()}`),
   });
 }
@@ -58,11 +60,23 @@ function useCategories() {
   });
 }
 
+function useStores() {
+  return useQuery<StoreDto[]>({
+    queryKey: ["stores", "Active"],
+    queryFn: () => api.get("/api/stores?status=Active"),
+    staleTime: 5 * 60_000,
+  });
+}
+
 export function InventoryListPage() {
+  const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
   const [brandId, setBrandId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [status, setStatus] = useState("Active");
+  // Defaults to the Warehouse Store's id once stores load (see effect below) — no separate
+  // "default" placeholder option, so the dropdown shows Warehouse genuinely selected.
+  const [storeId, setStoreId] = useState("");
 
   const deferredSearch = useDeferredValue(searchInput);
 
@@ -70,9 +84,17 @@ export function InventoryListPage() {
     data: inventory,
     isLoading,
     isError,
-  } = useInventory(deferredSearch, brandId, categoryId, status);
+  } = useInventory(deferredSearch, brandId, categoryId, status, storeId);
   const { data: brands } = useBrands();
   const { data: categories } = useCategories();
+  const { data: stores } = useStores();
+
+  useEffect(() => {
+    if (!storeId && stores) {
+      const warehouse = stores.find((s) => s.type === "Warehouse");
+      if (warehouse) setStoreId(warehouse.id);
+    }
+  }, [stores, storeId]);
 
   return (
     <Box>
@@ -90,6 +112,20 @@ export function InventoryListPage() {
           sx={{ minWidth: 220 }}
         />
         <FormControl size="small" sx={{ minWidth: 160 }}>
+          <InputLabel>Store</InputLabel>
+          <Select
+            value={storeId}
+            label="Store"
+            onChange={(e) => setStoreId(e.target.value)}
+          >
+            {stores?.map((s) => (
+              <MenuItem key={s.id} value={s.id}>
+                {s.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 160 }}>
           <InputLabel>Brand</InputLabel>
           <Select
             value={brandId}
@@ -104,21 +140,6 @@ export function InventoryListPage() {
             ))}
           </Select>
         </FormControl>
-        {/* <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Category</InputLabel>
-          <Select
-            value={categoryId}
-            label="Category"
-            onChange={(e) => setCategoryId(e.target.value)}
-          >
-            <MenuItem value="">All categories</MenuItem>
-            {categories?.map((c) => (
-              <MenuItem key={c.id} value={c.id}>
-                {c.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl> */}
         <FormControl sx={{ minWidth: 160 }}>
           <InputLabel>Category</InputLabel>
           <Select
@@ -165,29 +186,29 @@ export function InventoryListPage() {
                 <TableCell>Product</TableCell>
                 <TableCell>Colour</TableCell>
                 <TableCell>Size</TableCell>
+                <TableCell>Store</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell align="right">Quantity</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {inventory.map((i) => (
-                <TableRow key={i.productVariantId} hover>
-                  <TableCell>
-                    <Link
-                      to={`/inventory/${i.productVariantId}`}
-                      style={{
-                        textDecoration: "none",
-                        color: "inherit",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {i.sku}
-                    </Link>
-                  </TableCell>
+                <TableRow
+                  key={i.productVariantId}
+                  hover
+                  onClick={() =>
+                    navigate(
+                      `/inventory/${i.productVariantId}?storeId=${i.storeId}`,
+                    )
+                  }
+                  sx={{ cursor: "pointer" }}
+                >
+                  <TableCell>{i.sku}</TableCell>
                   <TableCell>{i.barcode ?? "—"}</TableCell>
                   <TableCell>{i.productName}</TableCell>
                   <TableCell>{i.colourName ?? "—"}</TableCell>
                   <TableCell>{i.sizeName ?? "—"}</TableCell>
+                  <TableCell>{i.storeName}</TableCell>
                   <TableCell>
                     <Chip
                       label={i.status}

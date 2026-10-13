@@ -14,7 +14,7 @@ The initial MVP will focus on:
 - Stock taking
 - Stock variance identification
 
-The system will be designed as an extensible foundation for future capabilities such as purchase orders, multiple stores, transfers, sales integration, returns, and reporting.
+The system is designed as an extensible foundation for future capabilities such as purchase orders, sales integration, returns, and reporting. Multiple stores and stock transfers (originally future capabilities) are now part of the product — see section 8.1.
 
 ### 1.2 Target Users
 
@@ -26,7 +26,7 @@ The system will be designed as an extensible foundation for future capabilities 
 
 ### 1.3 Initial Business Assumptions
 
-- The business initially operates a single retail store.
+- The business operates one Warehouse Store (where stock is received) and may have additional stores (long-standing, one-off or online).
 - A product can have multiple variants.
 - A variant represents a countable/sellable SKU.
 - Stock quantity belongs to inventory, not the product or product variant.
@@ -59,10 +59,9 @@ The MVP should allow the business to:
 
 ## 2.2 Non-Goals for MVP
 
-The following are intentionally outside the initial MVP:
+The following are intentionally outside the MVP:
 
-- Multi-store management
-- Warehouse management
+- Full warehouse management (bins, picking, putaway)
 - Sales/POS integration
 - Customer management
 - Supplier portal
@@ -291,16 +290,16 @@ XL
 
 # 6. Supplier Management
 
-The system must maintain suppliers because goods receiving needs to identify where stock came from.
+The system must maintain suppliers because goods receiving needs to identify where stock came from. A Goods Receipt references exactly one Supplier. Only Admins create, edit or change the status of a Supplier.
 
 Supplier fields:
 
 - Supplier ID
-- Supplier code
+- Supplier code (unique)
 - Name
-- Email
-- Phone
-- Status
+- Email (required)
+- Phone (required)
+- Status (`Active` / `Inactive`)
 - Created date
 - Updated date
 
@@ -375,12 +374,10 @@ Fields:
 
 # 8. Inventory
 
-Inventory represents the current system quantity of each product variant.
-
-For the initial single-store MVP:
+Inventory represents the current system quantity of each product variant at each Store.
 
 ```text
-ProductVariant
+ProductVariant + Store
       │
       ▼
 Inventory
@@ -392,25 +389,42 @@ Example:
 
 ```text
 SKU: TS-BLK-M
+Store: Warehouse
 Quantity: 80
 ```
 
-Inventory should contain:
+Inventory contains:
 
 - ID
 - Product variant ID
+- Store ID
 - Quantity
 - Updated date
 
-A unique constraint should exist on:
+A unique constraint exists on:
 
 ```text
-ProductVariant
+(ProductVariant, Store)
 ```
 
-because there is currently only one store.
+A variant that has never had a transaction at a Store has an Inventory of zero there. Quantity always equals the sum of that variant's Inventory Transactions at that Store.
 
-The design should allow a future `Location`/`Store` field to be added.
+## 8.1 Stores and Stock Transfers
+
+A **Store** is a location that holds its own Inventory, with a `Type` (`Warehouse`, `LongStanding`, `OneOff`, `Online`) and a `Status` (`Active` / `Closed`).
+
+- Exactly one Store is the Warehouse; Goods Receipts can only target it.
+- A Store can be closed only when its Inventory is zero for every variant.
+
+A **Stock Transfer** moves stock between Stores:
+
+- One side of every transfer is the Warehouse; transfers between two non-Warehouse stores go through the Warehouse as two transfers.
+- Status flow: `Draft` → `Dispatched` → `Received`, with `Cancelled` reachable from `Draft`.
+- Dispatching reduces the source Store's Inventory (`TransferOut`); receiving increases the destination's (`TransferIn`).
+- The received quantity may differ from the dispatched quantity (loss or damage in transit).
+- One line per variant per transfer.
+
+A Stock Take is scoped to exactly one Store.
 
 ---
 
@@ -670,28 +684,22 @@ Users should be able to determine:
 
 ## Main Navigation
 
-The MVP navigation should be:
+The navigation is grouped into sections:
 
 ```text
 Dashboard
 
-Products
+Operations
+  ├── Receiving (Goods Receipts)
+  ├── Inventory
+  ├── Stock Take
+  └── Stock Transfers
+
+Setup
   ├── Products
-  └── Variants
-
-Receiving
-  ├── Goods Receipts
-  └── New Receipt
-
-Inventory
-
-Stock Take
-  ├── Stock Takes
-  └── New Stock Take
-
-Suppliers
-
-Settings
+  ├── Stores
+  ├── Suppliers
+  └── Settings
 ```
 
 Purchase Orders can be added later:
@@ -706,18 +714,39 @@ Purchasing
 
 # 17. Dashboard
 
-The initial dashboard should provide simple information:
+The dashboard is the landing page after login. It is read-only and identical for every role. A Store selector (default: all stores) scopes the stock figures only; the work counts always cover all stores.
 
 ```text
-Products             1,250
-Variants             4,850
-Current Stock       12,430
+Units on hand                 12,430
+Variants at zero or below         14
 
-Open Stock Takes         2
-Recent Receipts          8
+Draft goods receipts               3
+Transfers in transit               2
+Stock takes open or awaiting
+approval                           2
 ```
 
+Each tile links to the matching list page. Below the tiles, a table shows the 10 most recent Inventory Transactions (date, type, SKU, product, store, change, user).
+
+"Zero or below" counts Active variants only; a variant with no Inventory row counts as zero. No stock value is shown, because purchase cost lives only on Goods Receipt Lines and no costing method is defined.
+
 Advanced analytics are outside the MVP.
+
+## 17.1 Settings
+
+Settings is open to every role.
+
+- **My account** (all roles): change your own password.
+- **Users** (Admin only, enforced on the API): list users, create a user, change a user's role, deactivate or reactivate a user, and set another user's password.
+
+Rules:
+
+- Each user has exactly one role (`Admin`, `Manager` or `Staff`).
+- Users are never deleted, because audit fields reference them. Deactivating a user blocks sign-in but keeps their name on history.
+- An Admin cannot deactivate themselves or change their own role, and the last active Admin can never be demoted or deactivated.
+- An Admin types the new password when resetting another user's password; there are no reset emails in the MVP.
+
+Reference-data management (Brands, Categories, Colours, Sizes) is not yet part of Settings.
 
 ---
 

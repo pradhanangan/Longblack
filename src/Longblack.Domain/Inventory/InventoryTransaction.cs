@@ -7,6 +7,8 @@ public class InventoryTransaction
     public Guid Id { get; set; }
     public Guid ProductVariantId { get; set; }
     public Catalogue.ProductVariant? ProductVariant { get; set; }
+    public Guid StoreId { get; set; }
+    public Stores.Store? Store { get; set; }
     public string Type { get; set; } = string.Empty;
     public int QuantityDelta { get; set; }
 

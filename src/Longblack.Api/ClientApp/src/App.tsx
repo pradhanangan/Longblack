@@ -5,6 +5,7 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SnackbarProvider } from "./contexts/SnackbarContext";
+import { DashboardPage } from "./pages/DashboardPage";
 import { GoodsReceiptDetailPage } from "./pages/GoodsReceiptDetailPage";
 import { GoodsReceiptListPage } from "./pages/GoodsReceiptListPage";
 import { InventoryDetailPage } from "./pages/InventoryDetailPage";
@@ -14,6 +15,12 @@ import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { ProductListPage } from "./pages/ProductListPage";
 import { StockTakeDetailPage } from "./pages/StockTakeDetailPage";
 import { StockTakeListPage } from "./pages/StockTakeListPage";
+import { StockTransferDetailPage } from "./pages/StockTransferDetailPage";
+import { StockTransferListPage } from "./pages/StockTransferListPage";
+import { StoreDetailPage } from "./pages/StoreDetailPage";
+import { StoreListPage } from "./pages/StoreListPage";
+import { SupplierListPage } from "./pages/SupplierListPage";
+import { SettingsPage } from "./pages/SettingsPage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -57,8 +64,9 @@ export default function App() {
                   <Route element={<AppLayout />}>
                     <Route
                       index
-                      element={<Navigate to="/products" replace />}
+                      element={<Navigate to="/dashboard" replace />}
                     />
+                    <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/products" element={<ProductListPage />} />
                     <Route
                       path="/products/:id"
@@ -85,6 +93,18 @@ export default function App() {
                       path="/stock-takes/:id"
                       element={<StockTakeDetailPage />}
                     />
+                    <Route path="/stores" element={<StoreListPage />} />
+                    <Route path="/stores/:id" element={<StoreDetailPage />} />
+                    <Route
+                      path="/stock-transfers"
+                      element={<StockTransferListPage />}
+                    />
+                    <Route
+                      path="/stock-transfers/:id"
+                      element={<StockTransferDetailPage />}
+                    />
+                    <Route path="/suppliers" element={<SupplierListPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
                   </Route>
                 </Route>
               </Routes>

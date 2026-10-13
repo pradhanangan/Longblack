@@ -1,6 +1,7 @@
 using Longblack.Application.Common.Exceptions;
 using Longblack.Application.Inventory;
 using Longblack.Application.Receiving.GoodsReceipts;
+using Longblack.Application.Stores;
 using Longblack.Domain.Catalogue;
 using Longblack.Domain.Inventory;
 using Longblack.Domain.Receiving;
@@ -9,19 +10,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Longblack.Infrastructure.Receiving;
 
-public class GoodsReceiptService(AppDbContext db, IInventoryService inventoryService) : IGoodsReceiptService
+public class GoodsReceiptService(AppDbContext db, IInventoryService inventoryService, IStoreService storeService) : IGoodsReceiptService
 {
     public async Task<IReadOnlyList<GoodsReceiptDto>> ListAsync(ListGoodsReceiptsFilter filter, CancellationToken ct = default)
     {
         var query = db.GoodsReceipts
+            .Include(g => g.Store)
+            .Include(g => g.Supplier)
             .Include(g => g.Lines).ThenInclude(l => l.ProductVariant)
             .AsQueryable();
 
         if (filter.Status is not null)
             query = query.Where(g => g.Status == filter.Status);
 
-        if (!string.IsNullOrWhiteSpace(filter.SupplierCode))
-            query = query.Where(g => g.SupplierCode == filter.SupplierCode);
+        if (filter.SupplierId is not null)
+            query = query.Where(g => g.SupplierId == filter.SupplierId);
 
         var receipts = await query.OrderByDescending(g => g.SequenceNumber).ToListAsync(ct);
         return receipts.Select(ToDto).ToList();
@@ -35,11 +38,20 @@ public class GoodsReceiptService(AppDbContext db, IInventoryService inventorySer
 
     public async Task<GoodsReceiptDto> CreateAsync(CreateGoodsReceiptDto dto, string createdBy, CancellationToken ct = default)
     {
+        var warehouseStoreId = await storeService.GetWarehouseStoreIdAsync(ct);
+
+        var supplier = await db.Suppliers.FindAsync([dto.SupplierId], ct)
+            ?? throw new InvalidReferenceException(nameof(Supplier), "supplierId", dto.SupplierId);
+
+        if (supplier.Status != ReferenceDataStatus.Active)
+            throw new InvalidStateException($"Supplier '{supplier.Name}' is inactive and cannot be used for a new goods receipt.");
+
         var now = DateTimeOffset.UtcNow;
         var receipt = new GoodsReceipt
         {
             Id = Guid.NewGuid(),
-            SupplierCode = dto.SupplierCode,
+            StoreId = warehouseStoreId,
+            SupplierId = dto.SupplierId,
             ReceivedDate = dto.ReceivedDate ?? now,
             Status = GoodsReceiptStatus.Draft,
             CreatedAt = now,
@@ -59,7 +71,11 @@ public class GoodsReceiptService(AppDbContext db, IInventoryService inventorySer
         var receipt = await RequireAsync(id, ct);
         RequireDraft(receipt);
 
-        receipt.SupplierCode = dto.SupplierCode;
+        var supplierExists = await db.Suppliers.AnyAsync(s => s.Id == dto.SupplierId, ct);
+        if (!supplierExists)
+            throw new InvalidReferenceException(nameof(Supplier), "supplierId", dto.SupplierId);
+
+        receipt.SupplierId = dto.SupplierId;
         receipt.ReceivedDate = dto.ReceivedDate ?? receipt.ReceivedDate;
         receipt.UpdatedAt = DateTimeOffset.UtcNow;
         receipt.UpdatedBy = updatedBy;
@@ -150,6 +166,8 @@ public class GoodsReceiptService(AppDbContext db, IInventoryService inventorySer
     public async Task<GoodsReceiptDto> MarkReceivedAsync(Guid id, string updatedBy, CancellationToken ct = default)
     {
         var receipt = await db.GoodsReceipts
+            .Include(g => g.Store)
+            .Include(g => g.Supplier)
             .Include(g => g.Lines).ThenInclude(l => l.ProductVariant)
             .FirstOrDefaultAsync(g => g.Id == id, ct)
             ?? throw new NotFoundException(nameof(GoodsReceipt), id);
@@ -171,6 +189,7 @@ public class GoodsReceiptService(AppDbContext db, IInventoryService inventorySer
             await inventoryService.PostTransactionAsync(
                 new PostInventoryTransactionDto(
                     line.ProductVariantId,
+                    receipt.StoreId,
                     InventoryTransactionType.GoodsReceived,
                     line.Quantity,
                     nameof(GoodsReceiptLine),
@@ -203,6 +222,8 @@ public class GoodsReceiptService(AppDbContext db, IInventoryService inventorySer
 
     private async Task<GoodsReceipt?> LoadAsync(Guid id, CancellationToken ct) =>
         await db.GoodsReceipts
+            .Include(g => g.Store)
+            .Include(g => g.Supplier)
             .Include(g => g.Lines).ThenInclude(l => l.ProductVariant)
             .FirstOrDefaultAsync(g => g.Id == id, ct);
 
@@ -222,7 +243,10 @@ public class GoodsReceiptService(AppDbContext db, IInventoryService inventorySer
     private static GoodsReceiptDto ToDto(GoodsReceipt g) =>
         new(g.Id,
             FormatReceiptNumber(g.SequenceNumber),
-            g.SupplierCode,
+            g.StoreId,
+            g.Store?.Name ?? string.Empty,
+            g.SupplierId,
+            g.Supplier?.Name ?? string.Empty,
             g.ReceivedDate,
             g.Status,
             g.ReceivedBy,

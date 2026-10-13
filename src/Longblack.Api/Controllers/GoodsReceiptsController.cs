@@ -12,10 +12,10 @@ public class GoodsReceiptsController(IGoodsReceiptService goodsReceiptService) :
     [HttpGet]
     public async Task<IActionResult> List(
         [FromQuery] string? status,
-        [FromQuery] string? supplierCode,
+        [FromQuery] Guid? supplierId,
         CancellationToken ct)
     {
-        var filter = new ListGoodsReceiptsFilter(status, supplierCode);
+        var filter = new ListGoodsReceiptsFilter(status, supplierId);
         var receipts = await goodsReceiptService.ListAsync(filter, ct);
         return Ok(receipts.Select(ToResponse));
     }
@@ -34,7 +34,7 @@ public class GoodsReceiptsController(IGoodsReceiptService goodsReceiptService) :
         try
         {
             var receipt = await goodsReceiptService.CreateAsync(
-                new CreateGoodsReceiptDto(request.SupplierCode, request.ReceivedDate),
+                new CreateGoodsReceiptDto(request.SupplierId, request.ReceivedDate),
                 CurrentUser, ct);
             return CreatedAtAction(nameof(GetById), new { id = receipt.Id }, ToResponse(receipt));
         }
@@ -51,7 +51,7 @@ public class GoodsReceiptsController(IGoodsReceiptService goodsReceiptService) :
         try
         {
             var receipt = await goodsReceiptService.UpdateAsync(
-                id, new UpdateGoodsReceiptDto(request.SupplierCode, request.ReceivedDate),
+                id, new UpdateGoodsReceiptDto(request.SupplierId, request.ReceivedDate),
                 CurrentUser, ct);
             return Ok(ToResponse(receipt));
         }
@@ -141,7 +141,7 @@ public class GoodsReceiptsController(IGoodsReceiptService goodsReceiptService) :
     }
 
     private static GoodsReceiptResponse ToResponse(GoodsReceiptDto dto) =>
-        new(dto.Id, dto.ReceiptNumber, dto.SupplierCode, dto.ReceivedDate,
+        new(dto.Id, dto.ReceiptNumber, dto.StoreId, dto.StoreName, dto.SupplierId, dto.SupplierName, dto.ReceivedDate,
             dto.Status, dto.ReceivedBy, dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy,
             dto.Lines.Select(l => new GoodsReceiptLineResponse(
                 l.Id, l.GoodsReceiptId, l.ProductVariantId, l.Sku, l.Barcode,

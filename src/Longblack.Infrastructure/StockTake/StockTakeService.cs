@@ -3,6 +3,7 @@ using Longblack.Application.Inventory;
 using Longblack.Application.StockTake;
 using Longblack.Domain.Catalogue;
 using Longblack.Domain.Inventory;
+using Longblack.Domain.Stores;
 using Longblack.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using StockTakeEntity = Longblack.Domain.StockTake.StockTake;
@@ -15,6 +16,7 @@ public class StockTakeService(AppDbContext db, IInventoryService inventoryServic
     public async Task<IReadOnlyList<StockTakeDto>> ListAsync(ListStockTakesFilter filter, CancellationToken ct = default)
     {
         var query = db.StockTakes
+            .Include(s => s.Store)
             .Include(s => s.Brand)
             .Include(s => s.Category).ThenInclude(c => c!.ParentCategory)
             .AsQueryable();
@@ -34,6 +36,12 @@ public class StockTakeService(AppDbContext db, IInventoryService inventoryServic
 
     public async Task<StockTakeDto> CreateAsync(CreateStockTakeDto dto, string createdBy, CancellationToken ct = default)
     {
+        var store = await db.Stores.FirstOrDefaultAsync(s => s.Id == dto.StoreId, ct)
+            ?? throw new InvalidReferenceException(nameof(Store), "storeId", dto.StoreId);
+
+        if (store.Status != StoreStatus.Active)
+            throw new InvalidStateException($"Store '{store.Name}' is {store.Status} and cannot be used for a new Stock Take.");
+
         if (dto.BrandId is not null)
         {
             var brandExists = await db.Brands.AnyAsync(b => b.Id == dto.BrandId, ct);
@@ -52,6 +60,7 @@ public class StockTakeService(AppDbContext db, IInventoryService inventoryServic
         var stockTake = new StockTakeEntity
         {
             Id = Guid.NewGuid(),
+            StoreId = dto.StoreId,
             BrandId = dto.BrandId,
             CategoryId = dto.CategoryId,
             Status = Domain.StockTake.StockTakeStatus.Draft,
@@ -90,7 +99,7 @@ public class StockTakeService(AppDbContext db, IInventoryService inventoryServic
 
         var variantIds = variants.Select(v => v.Id).ToList();
         var inventoryByVariantId = await db.Inventory
-            .Where(i => variantIds.Contains(i.ProductVariantId))
+            .Where(i => i.StoreId == stockTake.StoreId && variantIds.Contains(i.ProductVariantId))
             .ToDictionaryAsync(i => i.ProductVariantId, i => i.Quantity, ct);
 
         var now = DateTimeOffset.UtcNow;
@@ -240,6 +249,7 @@ public class StockTakeService(AppDbContext db, IInventoryService inventoryServic
             await inventoryService.PostTransactionAsync(
                 new PostInventoryTransactionDto(
                     item.ProductVariantId,
+                    stockTake.StoreId,
                     InventoryTransactionType.StockTakeAdjustment,
                     variance,
                     nameof(StockTakeItemEntity),
@@ -278,6 +288,7 @@ public class StockTakeService(AppDbContext db, IInventoryService inventoryServic
 
     private async Task<StockTakeEntity?> LoadAsync(Guid id, CancellationToken ct) =>
         await db.StockTakes
+            .Include(s => s.Store)
             .Include(s => s.Brand)
             .Include(s => s.Category).ThenInclude(c => c!.ParentCategory)
             .Include(s => s.Items).ThenInclude(i => i.ProductVariant).ThenInclude(v => v!.Product)
@@ -313,6 +324,7 @@ public class StockTakeService(AppDbContext db, IInventoryService inventoryServic
     private static StockTakeDto ToDto(StockTakeEntity s, IEnumerable<StockTakeItemEntity> items) =>
         new(s.Id,
             FormatReferenceNumber(s.SequenceNumber),
+            s.StoreId, s.Store?.Name ?? string.Empty,
             s.BrandId, s.Brand?.Name,
             s.CategoryId, s.Category?.DisplayName,
             s.Status,

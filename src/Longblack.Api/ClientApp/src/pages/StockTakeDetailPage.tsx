@@ -154,6 +154,8 @@ export function StockTakeDetailPage() {
           maxWidth: 600,
         }}
       >
+        <Typography color="text.secondary">Store</Typography>
+        <Typography>{stockTake.storeName}</Typography>
         <Typography color="text.secondary">Brand Scope</Typography>
         <Typography>{stockTake.brandName ?? "Any"}</Typography>
         <Typography color="text.secondary">Category Scope</Typography>

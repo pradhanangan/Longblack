@@ -20,7 +20,7 @@ public class AuthController(
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var user = await userManager.FindByEmailAsync(request.Email);
-        if (user is null || !await userManager.CheckPasswordAsync(user, request.Password))
+        if (user is null || !await userManager.CheckPasswordAsync(user, request.Password) || !user.IsActive)
             return Unauthorized(new { message = "Invalid email or password." });
 
         var roles = await userManager.GetRolesAsync(user);

@@ -1,4 +1,5 @@
 using Longblack.Application.Inventory;
+using Longblack.Application.Stores;
 using Longblack.Domain.Catalogue;
 using Longblack.Domain.Inventory;
 using Longblack.Infrastructure.Persistence;
@@ -6,10 +7,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Longblack.Infrastructure.Inventory;
 
-public class InventoryService(AppDbContext db) : IInventoryService
+public class InventoryService(AppDbContext db, IStoreService storeService) : IInventoryService
 {
     public async Task<IReadOnlyList<InventoryDto>> ListAsync(ListInventoryFilter filter, CancellationToken ct = default)
     {
+        var storeId = filter.StoreId ?? await storeService.GetWarehouseStoreIdAsync(ct);
+
         var query = db.ProductVariants
             .Include(v => v.Product)
             .Include(v => v.Colour)
@@ -47,20 +50,24 @@ public class InventoryService(AppDbContext db) : IInventoryService
 
         var variants = await query.OrderBy(v => v.Sku).ToListAsync(ct);
 
-        // Left-join semantics: fetch existing Inventory rows for these variants and default to
-        // zero for any variant that has never had one created (never received — see CONTEXT.md).
+        var store = await db.Stores.FirstAsync(s => s.Id == storeId, ct);
+
+        // Left-join semantics: fetch existing Inventory rows for these variants at this Store and
+        // default to zero for any variant that has never had one created there.
         var variantIds = variants.Select(v => v.Id).ToList();
         var inventoryByVariantId = await db.Inventory
-            .Where(i => variantIds.Contains(i.ProductVariantId))
+            .Where(i => i.StoreId == storeId && variantIds.Contains(i.ProductVariantId))
             .ToDictionaryAsync(i => i.ProductVariantId, i => i, ct);
 
         return variants
-            .Select(v => ToDto(v, inventoryByVariantId.GetValueOrDefault(v.Id)))
+            .Select(v => ToDto(v, store, inventoryByVariantId.GetValueOrDefault(v.Id)))
             .ToList();
     }
 
-    public async Task<InventoryDto?> GetByVariantIdAsync(Guid productVariantId, CancellationToken ct = default)
+    public async Task<InventoryDto?> GetByVariantIdAsync(Guid productVariantId, Guid? storeId = null, CancellationToken ct = default)
     {
+        var resolvedStoreId = storeId ?? await storeService.GetWarehouseStoreIdAsync(ct);
+
         var variant = await db.ProductVariants
             .Include(v => v.Product)
             .Include(v => v.Colour)
@@ -70,19 +77,31 @@ public class InventoryService(AppDbContext db) : IInventoryService
         if (variant is null)
             return null;
 
-        var inventory = await db.Inventory.FirstOrDefaultAsync(i => i.ProductVariantId == productVariantId, ct);
-        return ToDto(variant, inventory);
+        var store = await db.Stores.FirstAsync(s => s.Id == resolvedStoreId, ct);
+        var inventory = await db.Inventory
+            .FirstOrDefaultAsync(i => i.ProductVariantId == productVariantId && i.StoreId == resolvedStoreId, ct);
+
+        return ToDto(variant, store, inventory);
     }
 
     public async Task<IReadOnlyList<InventoryTransactionDto>> GetTransactionsAsync(Guid productVariantId, CancellationToken ct = default)
     {
         return await db.InventoryTransactions
+            .Include(t => t.Store)
             .Where(t => t.ProductVariantId == productVariantId)
             .OrderBy(t => t.CreatedAt)
             .Select(t => new InventoryTransactionDto(
-                t.Id, t.ProductVariantId, t.Type, t.QuantityDelta,
+                t.Id, t.ProductVariantId, t.StoreId, t.Store!.Name, t.Type, t.QuantityDelta,
                 t.SourceType, t.SourceId, t.CreatedAt, t.CreatedBy))
             .ToListAsync(ct);
+    }
+
+    public async Task<int> GetQuantityAsync(Guid productVariantId, Guid storeId, CancellationToken ct = default)
+    {
+        var inventory = await db.Inventory
+            .FirstOrDefaultAsync(i => i.ProductVariantId == productVariantId && i.StoreId == storeId, ct);
+
+        return inventory?.Quantity ?? 0;
     }
 
     public async Task PostTransactionAsync(PostInventoryTransactionDto dto, CancellationToken ct = default)
@@ -90,7 +109,7 @@ public class InventoryService(AppDbContext db) : IInventoryService
         var now = DateTimeOffset.UtcNow;
 
         var inventory = await db.Inventory
-            .FirstOrDefaultAsync(i => i.ProductVariantId == dto.ProductVariantId, ct);
+            .FirstOrDefaultAsync(i => i.ProductVariantId == dto.ProductVariantId && i.StoreId == dto.StoreId, ct);
 
         if (inventory is null)
         {
@@ -98,6 +117,7 @@ public class InventoryService(AppDbContext db) : IInventoryService
             {
                 Id = Guid.NewGuid(),
                 ProductVariantId = dto.ProductVariantId,
+                StoreId = dto.StoreId,
                 Quantity = 0,
                 CreatedAt = now,
                 UpdatedAt = now,
@@ -115,6 +135,7 @@ public class InventoryService(AppDbContext db) : IInventoryService
         {
             Id = Guid.NewGuid(),
             ProductVariantId = dto.ProductVariantId,
+            StoreId = dto.StoreId,
             Type = dto.Type,
             QuantityDelta = dto.QuantityDelta,
             SourceType = dto.SourceType,
@@ -127,9 +148,9 @@ public class InventoryService(AppDbContext db) : IInventoryService
         // commits this together with its own changes in a single unit of work.
     }
 
-    private static InventoryDto ToDto(ProductVariant v, Domain.Inventory.Inventory? inventory) =>
+    private static InventoryDto ToDto(ProductVariant v, Domain.Stores.Store store, Domain.Inventory.Inventory? inventory) =>
         new(v.Id, v.Sku, v.Barcode, v.Product?.Name ?? string.Empty,
             v.Colour?.Name, v.Size?.Name, v.Status,
+            store.Id, store.Name,
             inventory?.Quantity ?? 0, inventory?.UpdatedAt);
 }
-

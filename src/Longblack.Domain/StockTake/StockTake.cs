@@ -9,6 +9,11 @@ public class StockTake
     // DB-generated via a Postgres sequence; ReferenceNumber (e.g. "ST-0001") is derived at read time.
     public int SequenceNumber { get; set; }
 
+    // Required, user-selectable at creation from any Active Store. ExpectedQuantity is always
+    // snapshotted from this Store's Inventory, and approving posts adjustments against it.
+    public Guid StoreId { get; set; }
+    public Stores.Store? Store { get; set; }
+
     // Scope filter, persisted as descriptive metadata (see ADR-0002) — both null means the whole
     // catalogue. Not used to re-derive Items after InProgress starts; Items are the source of truth
     // for what's actually in scope from that point on.

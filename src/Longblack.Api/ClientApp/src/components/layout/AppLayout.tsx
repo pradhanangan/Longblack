@@ -1,4 +1,4 @@
-import { Box, GlobalStyles } from "@mui/material";
+import { Box, GlobalStyles, Typography } from "@mui/material";
 import { Outlet } from "react-router-dom";
 import { Sidebar, DRAWER_WIDTH } from "./Sidebar";
 
@@ -11,13 +11,32 @@ export function AppLayout() {
         component="main"
         sx={{
           flexGrow: 1,
-          px: 3,
-          pb: 3,
           minWidth: 0,
           width: `calc(100% - ${DRAWER_WIDTH}px)`,
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        <Outlet />
+        <Box sx={{ flexGrow: 1, px: 3, pb: 3 }}>
+          <Outlet />
+        </Box>
+        <Box
+          component="footer"
+          sx={{
+            position: "sticky",
+            bottom: 0,
+            px: 3,
+            py: 1,
+            bgcolor: "background.paper",
+            textAlign: "right",
+            zIndex: (t) => t.zIndex.appBar,
+          }}
+        >
+          <Typography variant="body2" color="text.secondary">
+            © 2026 NPradhananga
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );

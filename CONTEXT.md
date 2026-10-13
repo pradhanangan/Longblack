@@ -12,9 +12,9 @@ _Avoid_: Delivery, shipment, receiving order
 A single product variant + quantity + unit cost entry within a Goods Receipt. Multiple lines for the same variant on one receipt are allowed (e.g. separate cartons at different costs).
 _Avoid_: Receipt item, line item
 
-**Supplier Code**:
-A free-text identifier of the supplier a Goods Receipt came from, entered directly on the Goods Receipt. For the MVP this is plain text with no backing `Supplier` entity, no uniqueness enforcement, and no FK — see [ADR-0001](./docs/adr/0001-supplier-code-instead-of-supplier-entity.md). A future `Supplier` reference-data entity may replace this with a proper reference.
-_Avoid_: Supplier ID, supplier reference
+**Supplier**:
+A reference-data entity identifying who a Goods Receipt's stock came from, with a unique `Code`, `Name`, required `Email`, required `Phone`, and a `Status` (`Active`/`Inactive`). A Goods Receipt references exactly one Supplier by FK. Admin-only create/edit/status change, matching the `Brand`/`Colour`/`Size` reference-data convention. Supersedes the earlier free-text `SupplierCode` design — see [ADR-0004](./docs/adr/0004-introduce-supplier-entity.md) (supersedes [ADR-0001](./docs/adr/0001-supplier-code-instead-of-supplier-entity.md)).
+_Avoid_: Supplier code (no longer a thing — a Supplier is a full entity, not a string), vendor
 
 **Inventory Transaction**:
 An immutable record of a single quantity change to one product variant's inventory at one Store, carrying a `Type` (e.g. `GoodsReceived`, `TransferOut`, `TransferIn`), a signed quantity delta, and a reference back to the source record that caused it (e.g. a Goods Receipt Line, or a Stock Transfer). One is created per Goods Receipt Line when a receipt is marked `Received`; a Stock Transfer creates a `TransferOut` at its source Store on `Dispatched` and a `TransferIn` at its destination Store on `Received`. The current inventory balance is always derived by summing transactions, never stored as a snapshot on the transaction itself.
@@ -39,6 +39,30 @@ _Avoid_: Stock movement, inventory transfer, shipment
 **Stock Transfer Line**:
 A single product variant + quantity entry within a Stock Transfer, consolidated to at most one line per variant per transfer (no cost dimension, unlike a Goods Receipt Line).
 _Avoid_: Transfer item, line item
+
+## Dashboard
+
+A read-only landing page summarising stock and outstanding work. Same content for every role.
+
+**Dashboard**:
+The page shown after login. Stock figures (total units on hand, variants at zero or below) respect an optional Store selector defaulting to all Stores; outstanding-work counts always cover all Stores. Also lists the most recent Inventory Transactions. Shows no stock value, because purchase cost lives only on Goods Receipt Lines.
+_Avoid_: Home, overview
+
+**In Transit**:
+A Stock Transfer that is `Dispatched` but not yet `Received`.
+_Avoid_: Pending transfer
+
+## Users & Settings
+
+Who can sign in and what they may do.
+
+**User**:
+A person who signs in, holding exactly one Role (`Admin`, `Manager` or `Staff`). Never deleted, because every record's audit fields name its creator; instead a User is deactivated, which blocks sign-in but keeps their name on history. An Admin cannot deactivate or change the Role of themselves, and the last active Admin can never be deactivated or demoted. An Admin sets another User's password directly.
+_Avoid_: Account, employee, operator
+
+**Settings**:
+Configuration page open to every Role. Everyone sees "My account" (change own password); only Admins also see "Users".
+_Avoid_: Admin panel, preferences
 
 ## Stock Take
 

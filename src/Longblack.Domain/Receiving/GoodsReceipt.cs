@@ -7,8 +7,12 @@ public class GoodsReceipt
     // DB-generated via a Postgres sequence; ReceiptNumber (e.g. "GR-0001") is derived from this at read time.
     public int SequenceNumber { get; set; }
 
-    // Free-text supplier identifier — no Supplier entity/FK for MVP. See ADR-0001.
-    public string SupplierCode { get; set; } = string.Empty;
+    // Set server-side to the Warehouse Store's id at creation — never user-selectable.
+    public Guid StoreId { get; set; }
+    public Stores.Store? Store { get; set; }
+
+    public Guid SupplierId { get; set; }
+    public Catalogue.Supplier? Supplier { get; set; }
     public DateTimeOffset ReceivedDate { get; set; }
     public string Status { get; set; } = GoodsReceiptStatus.Draft;
 
