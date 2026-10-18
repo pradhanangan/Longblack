@@ -12,7 +12,7 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["src/Longblack.Api/Longblack.Api.csproj", "src/Longblack.API/"]
+COPY ["src/Longblack.Api/Longblack.Api.csproj", "src/Longblack.Api/"]
 COPY ["src/Longblack.Infrastructure/Longblack.Infrastructure.csproj", "src/Longblack.Infrastructure/"]
 COPY ["src/Longblack.Application/Longblack.Application.csproj", "src/Longblack.Application/"]
 COPY ["src/Longblack.Domain/Longblack.Domain.csproj", "src/Longblack.Domain/"]
@@ -26,8 +26,17 @@ FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "./Longblack.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
+# This stage builds the React SPA
+FROM node:22-alpine AS webbuild
+WORKDIR /web
+COPY src/Longblack.Api/ClientApp/package.json src/Longblack.Api/ClientApp/package-lock.json ./
+RUN npm ci
+COPY src/Longblack.Api/ClientApp/ ./
+RUN npm run build
+
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY --from=webbuild /web/dist ./wwwroot
 ENTRYPOINT ["dotnet", "Longblack.Api.dll"]

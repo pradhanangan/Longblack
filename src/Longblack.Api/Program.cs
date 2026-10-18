@@ -2,6 +2,8 @@ using System.Text;
 using Longblack.Infrastructure.DependencyInjection;
 using Longblack.Infrastructure.Seeding;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
@@ -51,10 +53,36 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
+// In production TLS is terminated by the reverse proxy.
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+// Serve the built React SPA only when it has been copied to wwwroot,
+// so the Vite dev server flow is unaffected.
+var webRootPath = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+var serveSpa = File.Exists(Path.Combine(webRootPath, "index.html"));
+if (serveSpa)
+{
+    var spaFiles = new PhysicalFileProvider(webRootPath);
+    app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = spaFiles });
+    app.UseStaticFiles(new StaticFileOptions { FileProvider = spaFiles });
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+if (serveSpa)
+{
+    app.MapFallbackToFile("{*path:regex(^(?!api/).*$):nonfile}", "index.html");
+}
 
 await DatabaseSeeder.SeedAsync(app.Services);
 

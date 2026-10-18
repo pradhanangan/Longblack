@@ -1,0 +1,51 @@
+name: longblack-prod
+
+services:
+  longblack-prod-caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+      - "8443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-prod-data:/data
+      - caddy-prod-config:/config
+    depends_on:
+      - longblack-prod-api
+
+  longblack-prod-api:
+    image: longblack-prod-api:latest
+    build:
+      context: .
+      dockerfile: src/Longblack.Api/Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=longblack-prod-db;Port=5432;Database=${POSTGRES_DB:-Longblack.Prod};Username=postgres;Password=${POSTGRES_PASSWORD}
+      JwtSettings__Key: ${JWT_KEY}
+      Seed__AdminEmail: ${ADMIN_EMAIL:-admin@longblack.com}
+      Seed__AdminPassword: ${ADMIN_PASSWORD}
+    depends_on:
+      - longblack-prod-db
+
+  longblack-prod-db:
+    image: postgres:17
+    container_name: longblack-prod-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-Longblack.Prod}
+    volumes:
+      - longblack-prod-pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:45432:5432"
+
+volumes:
+  caddy-prod-data:
+  caddy-prod-config:
+  longblack-prod-pgdata:
