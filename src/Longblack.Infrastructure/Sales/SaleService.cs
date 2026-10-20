@@ -46,9 +46,6 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
         var store = await db.Stores.FirstOrDefaultAsync(s => s.Id == dto.StoreId, ct)
             ?? throw new InvalidReferenceException(nameof(Store), "storeId", dto.StoreId);
 
-        if (store.Type == StoreType.Warehouse)
-            throw new InvalidStateException("Sales cannot be made from the Warehouse Store.");
-
         if (store.Status != StoreStatus.Active)
             throw new InvalidStateException($"Store '{store.Name}' is {store.Status} and cannot make sales.");
 

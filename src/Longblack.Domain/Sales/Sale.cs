@@ -9,7 +9,7 @@ public class Sale
     // DB-generated via a Postgres sequence; SaleNumber (e.g. "SL-0001") is derived at read time.
     public int SequenceNumber { get; set; }
 
-    // Never the Warehouse Store; enforced at the application layer.
+    // Any Active Store, including the Warehouse Store.
     public Guid StoreId { get; set; }
     public Store? Store { get; set; }
 

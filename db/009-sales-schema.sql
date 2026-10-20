@@ -21,7 +21,8 @@ CREATE SEQUENCE IF NOT EXISTS sale_seq
 -- ---------------------------------------------------------------------------
 -- sales
 --
--- A Sale is never made at the Warehouse store; that is enforced at the
+-- A Sale may be made at any Active store, including the Warehouse store; that
+-- is enforced at the
 -- application layer. Payment is set on completion and recorded for reference.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS sales (

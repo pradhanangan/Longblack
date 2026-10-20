@@ -5,7 +5,7 @@ public interface ISaleService
     Task<IReadOnlyList<SaleDto>> ListAsync(ListSalesFilter filter, CancellationToken ct = default);
     Task<SaleDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
-    // Rejects the Warehouse Store and Closed Stores.
+    // Rejects Closed Stores. The Warehouse Store may sell.
     Task<SaleDto> CreateAsync(CreateSaleDto dto, string createdBy, CancellationToken ct = default);
 
     // Lines are only editable while Draft. Adding snapshots the variant's Selling Price, and

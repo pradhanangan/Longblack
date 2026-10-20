@@ -8,7 +8,7 @@ Longblack tracks stock arriving, moving between Stores and being counted, but ha
 
 ## Solution
 
-Add lightweight sale recording: a Sale is created at one non-Warehouse Store, holds one or more Sale Lines priced from the variant's Selling Price, and records a Payment. Completing a Sale decreases that Store's Inventory through `Sale` Inventory Transactions. A Manager or Admin can void a completed Sale, which restores stock via reversing `SaleVoid` transactions. This is not a full till: no shifts, receipt printing, payment processing, customers, promotions or returns.
+Add lightweight sale recording: a Sale is created at one Active Store (the Warehouse included), holds one or more Sale Lines priced from the variant's Selling Price, and records a Payment. Completing a Sale decreases that Store's Inventory through `Sale` Inventory Transactions. A Manager or Admin can void a completed Sale, which restores stock via reversing `SaleVoid` transactions. This is not a full till: no shifts, receipt printing, payment processing, customers, promotions or returns.
 
 Vocabulary follows the Sales section of `CONTEXT.md`.
 
@@ -37,7 +37,7 @@ Vocabulary follows the Sales section of `CONTEXT.md`.
 21. As an Admin, I want a void to record who voided it and when, so that it is auditable.
 22. As a Manager, I want to list Sales filtered by Store, status and date range, so that I can review activity.
 23. As a Manager, I want to open a Sale and see its lines, discounts, Payment and status, so that I can answer questions about it.
-24. As a Staff member, I want to see only Stores I may sell at, and never the Warehouse Store, so that I cannot sell from the hub.
+24. As a Staff member, I want to pick any Active Store, including the Warehouse, so that I can sell from the hub.
 25. As a Manager, I want a Sale at a Closed Store rejected, so that closed Stores stay at zero.
 26. As a Manager, I want each Sale to appear in the Inventory Transaction history with its Sale as source, so that stock changes are traceable.
 27. As a Manager, I want the Dashboard to show recent Sales and a sales total, so that I can see trading at a glance.
@@ -50,7 +50,7 @@ Vocabulary follows the Sales section of `CONTEXT.md`.
 
 - New domain concepts: Sale, Sale Line and Payment, with string-enum status `Draft` → `Completed` → `Voided`, plus `Cancelled` from `Draft` only. Audit fields on all transactional entities, plus void audit (who and when).
 - Selling Price is a GST-inclusive field on ProductVariant. Each Sale Line copies it at sale time. Purchase cost stays only on Goods Receipt Lines. Per-Store price overrides are deferred. Candidate for an ADR (hard to reverse, needs context).
-- A Sale belongs to exactly one non-Warehouse, Active Store; Warehouse and Closed Stores are rejected.
+- A Sale belongs to exactly one Active Store (including the Warehouse); Closed Stores are rejected.
 - Anonymous: no Customer reference.
 - Sale Lines are consolidated to at most one per variant per Sale. Optional manual line-level discount, an amount that may not exceed the line total. No rule-based promotions.
 - Payment records a type and amount for reference only; no processing. Payment amount must equal the Sale total on completion. The payment type set is a small string enum, to be fixed during implementation.

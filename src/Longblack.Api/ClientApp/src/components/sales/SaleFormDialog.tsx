@@ -22,7 +22,6 @@ interface Props {
   onClose: () => void
 }
 
-// The Warehouse Store never sells, so it is not offered; the server enforces this too.
 export function SaleFormDialog({ open, onClose }: Props) {
   const { showSuccess, showError } = useSnackbar()
   const queryClient = useQueryClient()
@@ -55,13 +54,11 @@ export function SaleFormDialog({ open, onClose }: Props) {
         <FormControl fullWidth margin="normal" required>
           <InputLabel>Store</InputLabel>
           <Select value={storeId} label="Store" onChange={(e) => setStoreId(e.target.value)}>
-            {stores
-              ?.filter((s) => s.type !== 'Warehouse')
-              .map((s) => (
-                <MenuItem key={s.id} value={s.id}>
-                  {s.name}
-                </MenuItem>
-              ))}
+            {stores?.map((s) => (
+              <MenuItem key={s.id} value={s.id}>
+                {s.name}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
       </DialogContent>

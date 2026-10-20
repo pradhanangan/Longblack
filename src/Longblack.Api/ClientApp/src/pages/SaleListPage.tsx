@@ -70,13 +70,11 @@ export function SaleListPage() {
           <InputLabel>Store</InputLabel>
           <Select value={storeId} label="Store" onChange={(e) => setStoreId(e.target.value)}>
             <MenuItem value="">All</MenuItem>
-            {stores
-              ?.filter((s) => s.type !== "Warehouse")
-              .map((s) => (
-                <MenuItem key={s.id} value={s.id}>
-                  {s.name}
-                </MenuItem>
-              ))}
+            {stores?.map((s) => (
+              <MenuItem key={s.id} value={s.id}>
+                {s.name}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 140 }}>
