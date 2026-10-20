@@ -41,5 +41,4 @@ public record SaleResponse(
     DateTimeOffset UpdatedAt,
     string CreatedBy,
     string UpdatedBy,
-    IReadOnlyList<SaleLineResponse> Lines,
-    IReadOnlyList<string> NegativeStockSkus);
+    IReadOnlyList<SaleLineResponse> Lines);

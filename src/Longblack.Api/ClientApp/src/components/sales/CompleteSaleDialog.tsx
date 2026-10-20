@@ -45,13 +45,10 @@ export function CompleteSaleDialog({ open, onClose, sale }: Props) {
         paymentType,
         paymentAmount: Number(paymentAmount),
       }),
-    onSuccess: (data: SaleDto) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       showSuccess('Sale completed. Store Inventory has been reduced.')
-      if (data.negativeStockSkus.length > 0) {
-        showError(`Stock is now below zero for: ${data.negativeStockSkus.join(', ')}`)
-      }
       onClose()
     },
     onError: (err: unknown) => showError((err as Error).message ?? 'Failed to complete Sale.'),

@@ -211,7 +211,7 @@ export function SaleDetailPage() {
             {sale.lines.map((line) => (
               <SaleLineRow key={line.id} saleId={sale.id} line={line} canEdit={canEditLines} />
             ))}
-            {canEditLines && <AddSaleLineRow saleId={sale.id} />}
+            {canEditLines && <AddSaleLineRow saleId={sale.id} storeId={sale.storeId} />}
           </TableBody>
         </Table>
       )}

@@ -14,9 +14,9 @@ public interface ISaleService
     Task<SaleDto> UpdateLineAsync(Guid id, Guid lineId, UpdateSaleLineDto dto, string updatedBy, CancellationToken ct = default);
     Task<SaleDto> RemoveLineAsync(Guid id, Guid lineId, string updatedBy, CancellationToken ct = default);
 
-    // Draft -> Completed: payment amount must equal the Sale total; posts one negative Sale
-    // InventoryTransaction per line. Never blocked by insufficient stock; the response lists any
-    // SKUs taken to zero or below.
+    // Draft -> Completed: payment amount must equal the Sale total; re-validates every line against
+    // the Store's available stock, then posts one negative Sale InventoryTransaction per line.
+    // Quantities above available stock are rejected.
     Task<SaleDto> CompleteAsync(Guid id, CompleteSaleDto dto, string updatedBy, CancellationToken ct = default);
 
     // Completed -> Voided: posts a reversing SaleVoid InventoryTransaction per line.

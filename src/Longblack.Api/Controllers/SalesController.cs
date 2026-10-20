@@ -144,6 +144,5 @@ public class SalesController(ISaleService saleService) : ApiControllerBase
             dto.Lines.Select(l => new SaleLineResponse(
                 l.Id, l.SaleId, l.ProductVariantId, l.Sku, l.Barcode, l.ProductName,
                 l.Quantity, l.UnitPrice, l.Discount, l.LineTotal,
-                l.CreatedAt, l.UpdatedAt, l.CreatedBy, l.UpdatedBy)).ToList(),
-            dto.NegativeStockSkus);
+                l.CreatedAt, l.UpdatedAt, l.CreatedBy, l.UpdatedBy)).ToList());
 }

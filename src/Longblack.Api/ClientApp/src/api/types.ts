@@ -259,5 +259,4 @@ export interface SaleDto {
   createdBy: string
   updatedBy: string
   lines: SaleLineDto[]
-  negativeStockSkus: string[]
 }

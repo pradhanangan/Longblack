@@ -45,7 +45,7 @@ _Avoid_: Transfer item, line item
 Recording stock sold to anonymous customers at a Store, and the resulting decrease to inventory. Not a full till/POS: no shifts or receipt printing.
 
 **Sale**:
-A record of stock sold at exactly one Active Store (the Warehouse Store included), containing one or more Sale Lines and a Payment. Anonymous — no Customer is recorded. Progresses `Draft` → `Completed` → (optionally) `Voided`. Completing a Sale is the action that decreases Inventory, posting one `Sale` Inventory Transaction per line; Inventory may go below zero and is flagged rather than blocked. Any Role can create and complete a Sale; only a Manager or Admin can void one, which posts reversing `SaleVoid` Inventory Transactions. Returns are not yet supported.
+A record of stock sold at exactly one Active Store (the Warehouse Store included), containing one or more Sale Lines and a Payment. Anonymous — no Customer is recorded. Progresses `Draft` → `Completed` → (optionally) `Voided`. Completing a Sale is the action that decreases Inventory, posting one `Sale` Inventory Transaction per line; a Sale Line's quantity can never exceed the Store's available Inventory for that variant, so only in-stock variants can be sold and Inventory never goes negative through a Sale. Any Role can create and complete a Sale; only a Manager or Admin can void one, which posts reversing `SaleVoid` Inventory Transactions. Returns are not yet supported.
 _Avoid_: Order, transaction, checkout
 
 **Sale Line**:

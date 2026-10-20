@@ -34,9 +34,7 @@ public record SaleDto(
     DateTimeOffset UpdatedAt,
     string CreatedBy,
     string UpdatedBy,
-    IReadOnlyList<SaleLineDto> Lines,
-    // SKUs taken below zero by completing this Sale; only populated on the Complete response.
-    IReadOnlyList<string> NegativeStockSkus);
+    IReadOnlyList<SaleLineDto> Lines);
 
 public record CreateSaleDto(Guid StoreId);
 

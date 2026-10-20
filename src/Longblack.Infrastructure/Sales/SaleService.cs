@@ -91,6 +91,7 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
             var quantity = existing.Quantity + dto.Quantity;
             var discount = existing.Discount + dto.Discount;
             ValidateLine(quantity, discount, existing.UnitPrice);
+            await RequireStockAsync(sale, variant.Sku, dto.ProductVariantId, quantity, ct);
 
             existing.Quantity = quantity;
             existing.Discount = discount;
@@ -100,6 +101,7 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
         else
         {
             ValidateLine(dto.Quantity, dto.Discount, variant.SellingPrice);
+            await RequireStockAsync(sale, variant.Sku, dto.ProductVariantId, dto.Quantity, ct);
 
             db.SaleLines.Add(new SaleLine
             {
@@ -132,6 +134,9 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
             ?? throw new NotFoundException(nameof(SaleLine), lineId);
 
         ValidateLine(dto.Quantity, dto.Discount, line.UnitPrice);
+
+        var sku = await db.ProductVariants.Where(v => v.Id == line.ProductVariantId).Select(v => v.Sku).FirstAsync(ct);
+        await RequireStockAsync(sale, sku, line.ProductVariantId, dto.Quantity, ct);
 
         line.Quantity = dto.Quantity;
         line.Discount = dto.Discount;
@@ -186,14 +191,13 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
             throw new InvalidStateException($"Store '{store.Name}' is {store.Status} and cannot make sales.");
 
         var now = DateTimeOffset.UtcNow;
-        var negativeStockSkus = new List<string>();
+
+        // Re-validate every line against current Inventory before posting anything.
+        foreach (var line in sale.Lines)
+            await RequireStockAsync(sale, line.ProductVariant?.Sku ?? string.Empty, line.ProductVariantId, line.Quantity, ct);
 
         foreach (var line in sale.Lines)
         {
-            var available = await inventoryService.GetQuantityAsync(line.ProductVariantId, sale.StoreId, ct);
-            if (available - line.Quantity < 0 && line.ProductVariant is not null)
-                negativeStockSkus.Add(line.ProductVariant.Sku);
-
             await inventoryService.PostTransactionAsync(
                 new PostInventoryTransactionDto(
                     line.ProductVariantId,
@@ -215,9 +219,7 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
         sale.UpdatedBy = updatedBy;
 
         await db.SaveChangesAsync(ct);
-
-        var result = await GetByIdAsync(sale.Id, ct) ?? ToDto(sale);
-        return result with { NegativeStockSkus = negativeStockSkus };
+        return await GetByIdAsync(sale.Id, ct) ?? ToDto(sale);
     }
 
     public async Task<SaleDto> VoidAsync(Guid id, string updatedBy, CancellationToken ct = default)
@@ -287,6 +289,14 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
                 $"Sale '{FormatSaleNumber(sale.SequenceNumber)}' is {sale.Status} and cannot be modified.");
     }
 
+    private async Task RequireStockAsync(Sale sale, string sku, Guid productVariantId, int quantity, CancellationToken ct)
+    {
+        var available = await inventoryService.GetQuantityAsync(productVariantId, sale.StoreId, ct);
+        if (quantity > available)
+            throw new InvalidStateException(
+                $"Quantity {quantity} for '{sku}' exceeds the available stock of {available} at this Store.");
+    }
+
     private static void ValidateLine(int quantity, decimal discount, decimal unitPrice)
     {
         if (quantity <= 0)
@@ -321,6 +331,5 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
             s.CompletedDate, s.CompletedBy,
             s.VoidedDate, s.VoidedBy,
             s.CreatedAt, s.UpdatedAt, s.CreatedBy, s.UpdatedBy,
-            s.Lines.Select(ToLineDto).ToList(),
-            []);
+            s.Lines.Select(ToLineDto).ToList());
 }

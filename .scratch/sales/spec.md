@@ -30,7 +30,7 @@ Vocabulary follows the Sales section of `CONTEXT.md`.
 14. As a Staff member, I want to complete a Sale, so that Inventory at my Store decreases.
 15. As a Staff member, I want a Completed Sale to be immutable, so that records stay trustworthy.
 16. As a Staff member, I want to cancel a Draft Sale, so that abandoned sales leave no trace in Inventory.
-17. As a Staff member, I want a warning when a sale takes a variant below zero stock, so that I notice stock-count errors without being blocked.
+17. As a Staff member, I want only variants with available stock at my Store offered for sale, and quantities capped to that stock, so that Inventory never goes negative.
 18. As a Manager, I want to void a Completed Sale, so that I can correct a wrongly recorded sale.
 19. As a Manager, I want voiding to restore Inventory, so that stock matches reality again.
 20. As a Staff member, I want voiding to be unavailable to me, so that sales cannot be reversed without oversight.
@@ -54,7 +54,7 @@ Vocabulary follows the Sales section of `CONTEXT.md`.
 - Anonymous: no Customer reference.
 - Sale Lines are consolidated to at most one per variant per Sale. Optional manual line-level discount, an amount that may not exceed the line total. No rule-based promotions.
 - Payment records a type and amount for reference only; no processing. Payment amount must equal the Sale total on completion. The payment type set is a small string enum, to be fixed during implementation.
-- Completing a Sale posts one `Sale` Inventory Transaction per line (negative delta, source is the Sale Line) at the Sale's Store. Inventory may go below zero; the completion response flags affected variants rather than rejecting.
+- Completing a Sale posts one `Sale` Inventory Transaction per line (negative delta, source is the Sale Line) at the Sale's Store. Quantity may not exceed the Store's available Inventory; this is checked when a line is added or edited and re-checked on completion, which rejects the whole Sale if any line fails.
 - Voiding posts reversing `SaleVoid` transactions and moves the Sale to `Voided`. Only Manager and Admin can void; Staff, Manager and Admin can create, edit Draft and complete.
 - Add `Sale` and `SaleVoid` to the Inventory Transaction type set. Inventory remains derived from transactions.
 - Application layer: a simple `SaleService` (no MediatR/CQRS), consistent with the other services. Complete and void run in a single database transaction.
