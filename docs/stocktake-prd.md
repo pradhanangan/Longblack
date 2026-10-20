@@ -62,7 +62,6 @@ The MVP should allow the business to:
 The following are intentionally outside the MVP:
 
 - Full warehouse management (bins, picking, putaway)
-- Sales/POS integration
 - Customer management
 - Supplier portal
 - Advanced purchasing workflows

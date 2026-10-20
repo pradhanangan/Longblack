@@ -40,7 +40,18 @@ interface DashboardDto {
   draftGoodsReceipts: number;
   transfersInTransit: number;
   stockTakesOpen: number;
+  salesTotalLast7Days: number;
+  recentSales: DashboardSaleDto[];
   recentTransactions: DashboardTransactionDto[];
+}
+
+interface DashboardSaleDto {
+  id: string;
+  saleNumber: string;
+  storeName: string;
+  total: number;
+  completedDate: string;
+  completedBy: string;
 }
 
 function StatCard({
@@ -66,6 +77,7 @@ function StatCard({
 }
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   const [storeId, setStoreId] = useState("");
 
   const { data: stores } = useQuery<StoreDto[]>({
@@ -143,6 +155,59 @@ export function DashboardPage() {
               to="/stock-takes"
             />
           </Box>
+
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            Sales
+          </Typography>
+          <Box sx={{ display: "flex", gap: 2, mb: 2, flexWrap: "wrap" }}>
+            <Card variant="outlined" sx={{ minWidth: 200, flex: "1 1 200px" }}>
+              <CardActionArea onClick={() => navigate("/sales")}>
+                <CardContent>
+                  <Typography variant="h4">
+                    ${dashboard.salesTotalLast7Days.toFixed(2)}
+                  </Typography>
+                  <Typography color="text.secondary">
+                    Sales, last 7 days (GST incl.)
+                  </Typography>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          </Box>
+          {dashboard.recentSales.length === 0 ? (
+            <Typography color="text.secondary" sx={{ mb: 4 }}>
+              No completed sales yet.
+            </Typography>
+          ) : (
+            <Table size="small" sx={{ mb: 4 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Completed</TableCell>
+                  <TableCell>Sale #</TableCell>
+                  <TableCell>Store</TableCell>
+                  <TableCell align="right">Total</TableCell>
+                  <TableCell>User</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {dashboard.recentSales.map((s) => (
+                  <TableRow
+                    key={s.id}
+                    hover
+                    onClick={() => navigate(`/sales/${s.id}`)}
+                    sx={{ cursor: "pointer" }}
+                  >
+                    <TableCell>
+                      {new Date(s.completedDate).toLocaleString()}
+                    </TableCell>
+                    <TableCell>{s.saleNumber}</TableCell>
+                    <TableCell>{s.storeName}</TableCell>
+                    <TableCell align="right">${s.total.toFixed(2)}</TableCell>
+                    <TableCell>{s.completedBy}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
 
           <Typography variant="h6" sx={{ mb: 1 }}>
             Recent activity

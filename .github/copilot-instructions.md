@@ -75,4 +75,4 @@ npm run lint      # oxlint
 
 ## What Is Intentionally Out of Scope (MVP)
 
-Do not implement: purchase orders, sales/POS, customer management, promotions, native mobile apps, or container orchestration. See `docs/stocktake-prd.md` section 2.2 for the full list.
+Do not implement: purchase orders, customer management, promotions, native mobile apps, or container orchestration. See `docs/stocktake-prd.md` section 2.2 for the full list.

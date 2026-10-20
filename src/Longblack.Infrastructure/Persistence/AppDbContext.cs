@@ -3,6 +3,7 @@ using Longblack.Domain.Identity;
 using Longblack.Domain.Inventory;
 using Longblack.Domain.Receiving;
 using Longblack.Domain.StockTransfers;
+using Longblack.Domain.Sales;
 using Longblack.Domain.Stores;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +31,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Store> Stores => Set<Store>();
     public DbSet<StockTransfer> StockTransfers => Set<StockTransfer>();
     public DbSet<StockTransferLine> StockTransferLines => Set<StockTransferLine>();
+    public DbSet<Sale> Sales => Set<Sale>();
+    public DbSet<SaleLine> SaleLines => Set<SaleLine>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -376,6 +379,54 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(l => l.CreatedBy).HasColumnName("created_by").IsRequired();
             e.Property(l => l.UpdatedBy).HasColumnName("updated_by").IsRequired();
             e.HasIndex(l => new { l.StockTransferId, l.ProductVariantId }).IsUnique();
+            e.HasOne(l => l.ProductVariant).WithMany().HasForeignKey(l => l.ProductVariantId);
+        });
+
+        // Backs Sale.SequenceNumber so sale numbers (SL-0001) are assigned atomically by Postgres.
+        builder.HasSequence<int>("sale_seq").StartsAt(1);
+
+        builder.Entity<Sale>(e =>
+        {
+            e.ToTable("sales");
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Id).HasColumnName("id");
+            e.Property(s => s.SequenceNumber)
+                .HasColumnName("sequence_number")
+                .HasDefaultValueSql("nextval('sale_seq')")
+                .ValueGeneratedOnAdd();
+            e.HasIndex(s => s.SequenceNumber).IsUnique();
+            e.Property(s => s.StoreId).HasColumnName("store_id");
+            e.Property(s => s.Status).HasColumnName("status").IsRequired();
+            e.Property(s => s.PaymentType).HasColumnName("payment_type");
+            e.Property(s => s.PaymentAmount).HasColumnName("payment_amount").HasPrecision(10, 2);
+            e.Property(s => s.CompletedDate).HasColumnName("completed_date");
+            e.Property(s => s.CompletedBy).HasColumnName("completed_by");
+            e.Property(s => s.VoidedDate).HasColumnName("voided_date");
+            e.Property(s => s.VoidedBy).HasColumnName("voided_by");
+            e.Property(s => s.CreatedAt).HasColumnName("created_at");
+            e.Property(s => s.UpdatedAt).HasColumnName("updated_at");
+            e.Property(s => s.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(s => s.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasOne(s => s.Store).WithMany().HasForeignKey(s => s.StoreId);
+            e.HasMany(s => s.Lines).WithOne(l => l.Sale).HasForeignKey(l => l.SaleId);
+        });
+
+        // SaleLine — unique per (SaleId, ProductVariantId): at most one line per variant per sale.
+        builder.Entity<SaleLine>(e =>
+        {
+            e.ToTable("sale_lines");
+            e.HasKey(l => l.Id);
+            e.Property(l => l.Id).HasColumnName("id");
+            e.Property(l => l.SaleId).HasColumnName("sale_id");
+            e.Property(l => l.ProductVariantId).HasColumnName("product_variant_id");
+            e.Property(l => l.Quantity).HasColumnName("quantity").IsRequired();
+            e.Property(l => l.UnitPrice).HasColumnName("unit_price").HasPrecision(10, 2);
+            e.Property(l => l.Discount).HasColumnName("discount").HasPrecision(10, 2);
+            e.Property(l => l.CreatedAt).HasColumnName("created_at");
+            e.Property(l => l.UpdatedAt).HasColumnName("updated_at");
+            e.Property(l => l.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(l => l.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasIndex(l => new { l.SaleId, l.ProductVariantId }).IsUnique();
             e.HasOne(l => l.ProductVariant).WithMany().HasForeignKey(l => l.ProductVariantId);
         });
     }

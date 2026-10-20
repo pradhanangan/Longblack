@@ -3,6 +3,7 @@ import InventoryIcon from "@mui/icons-material/Inventory";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PeopleIcon from "@mui/icons-material/People";
+import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import StoreIcon from "@mui/icons-material/Store";
@@ -42,6 +43,7 @@ const NAV_GROUPS = [
       { label: "Inventory", icon: <InventoryIcon />, path: "/inventory" },
       { label: "Stock Take", icon: <ShoppingCartIcon />, path: "/stock-takes" },
       { label: "Stock Transfers", icon: <SwapHorizIcon />, path: "/stock-transfers" },
+      { label: "Sales", icon: <PointOfSaleIcon />, path: "/sales" },
     ],
   },
   {

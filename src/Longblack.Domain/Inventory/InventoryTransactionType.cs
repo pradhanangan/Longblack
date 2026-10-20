@@ -11,4 +11,10 @@ public static class InventoryTransactionType
 
     // Posted at the destination Store when a Stock Transfer is Received.
     public const string TransferIn = "TransferIn";
+
+    // Posted at the Sale's Store when a Sale is Completed (negative delta).
+    public const string Sale = "Sale";
+
+    // Posted when a Completed Sale is Voided, reversing the original Sale transactions.
+    public const string SaleVoid = "SaleVoid";
 }

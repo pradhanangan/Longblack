@@ -9,6 +9,7 @@ using Longblack.Application.Dashboard;
 using Longblack.Application.Inventory;
 using Longblack.Application.Receiving.GoodsReceipts;
 using Longblack.Application.StockTake;
+using Longblack.Application.Sales;
 using Longblack.Application.StockTransfers;
 using Longblack.Application.Stores;
 using Longblack.Domain.Identity;
@@ -18,6 +19,7 @@ using Longblack.Infrastructure.Inventory;
 using Longblack.Infrastructure.Persistence;
 using Longblack.Infrastructure.Receiving;
 using Longblack.Infrastructure.StockTake;
+using Longblack.Infrastructure.Sales;
 using Longblack.Infrastructure.StockTransfers;
 using Longblack.Infrastructure.Stores;
 using Microsoft.AspNetCore.Identity;
@@ -62,6 +64,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IStockTakeService, StockTakeService>();
         services.AddScoped<IStoreService, StoreService>();
         services.AddScoped<IStockTransferService, StockTransferService>();
+        services.AddScoped<ISaleService, SaleService>();
 
         return services;
     }

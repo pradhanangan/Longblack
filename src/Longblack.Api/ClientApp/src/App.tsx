@@ -13,6 +13,8 @@ import { InventoryListPage } from "./pages/InventoryListPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { ProductListPage } from "./pages/ProductListPage";
+import { SaleDetailPage } from "./pages/SaleDetailPage";
+import { SaleListPage } from "./pages/SaleListPage";
 import { StockTakeDetailPage } from "./pages/StockTakeDetailPage";
 import { StockTakeListPage } from "./pages/StockTakeListPage";
 import { StockTransferDetailPage } from "./pages/StockTransferDetailPage";
@@ -103,6 +105,8 @@ export default function App() {
                       path="/stock-transfers/:id"
                       element={<StockTransferDetailPage />}
                     />
+                    <Route path="/sales" element={<SaleListPage />} />
+                    <Route path="/sales/:id" element={<SaleDetailPage />} />
                     <Route path="/suppliers" element={<SupplierListPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                   </Route>

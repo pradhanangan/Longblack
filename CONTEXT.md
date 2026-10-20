@@ -40,12 +40,32 @@ _Avoid_: Stock movement, inventory transfer, shipment
 A single product variant + quantity entry within a Stock Transfer, consolidated to at most one line per variant per transfer (no cost dimension, unlike a Goods Receipt Line).
 _Avoid_: Transfer item, line item
 
+## Sales
+
+Recording stock sold to anonymous customers at a Store, and the resulting decrease to inventory. Not a full till/POS: no shifts or receipt printing.
+
+**Sale**:
+A record of stock sold at exactly one non-Warehouse Store, containing one or more Sale Lines and a Payment. Anonymous — no Customer is recorded. Progresses `Draft` → `Completed` → (optionally) `Voided`. Completing a Sale is the action that decreases Inventory, posting one `Sale` Inventory Transaction per line; Inventory may go below zero and is flagged rather than blocked. Any Role can create and complete a Sale; only a Manager or Admin can void one, which posts reversing `SaleVoid` Inventory Transactions. Returns are not yet supported.
+_Avoid_: Order, transaction, checkout
+
+**Sale Line**:
+A single product variant + quantity entry within a Sale, snapshotting the Selling Price at the time of sale and carrying an optional manual line-level discount.
+_Avoid_: Sale item, line item
+
+**Selling Price**:
+The GST-inclusive price a product variant sells for, held on the Product Variant. Each Sale Line copies it at sale time so later price changes never alter past Sales. Distinct from purchase cost, which lives only on Goods Receipt Lines.
+_Avoid_: Retail price, RRP
+
+**Payment**:
+How a Sale was paid (a payment type and amount). Recorded for reference only; no payment processing.
+_Avoid_: Tender
+
 ## Dashboard
 
 A read-only landing page summarising stock and outstanding work. Same content for every role.
 
 **Dashboard**:
-The page shown after login. Stock figures (total units on hand, variants at zero or below) respect an optional Store selector defaulting to all Stores; outstanding-work counts always cover all Stores. Also lists the most recent Inventory Transactions. Shows no stock value, because purchase cost lives only on Goods Receipt Lines.
+The page shown after login. Stock figures (total units on hand, variants at zero or below) respect an optional Store selector defaulting to all Stores; outstanding-work counts always cover all Stores. Also lists the most recent Inventory Transactions, the most recent completed Sales, and a GST-inclusive total of Completed Sales over the last 7 days (respecting the Store selector). Shows no stock value, because purchase cost lives only on Goods Receipt Lines.
 _Avoid_: Home, overview
 
 **In Transit**:

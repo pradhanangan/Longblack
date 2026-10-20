@@ -1,6 +1,7 @@
 using Longblack.Application.Dashboard;
 using Longblack.Domain.Catalogue;
 using Longblack.Domain.Receiving;
+using Longblack.Domain.Sales;
 using Longblack.Domain.StockTake;
 using Longblack.Domain.StockTransfers;
 using Longblack.Infrastructure.Persistence;
@@ -36,6 +37,26 @@ public class DashboardService(AppDbContext db) : IDashboardService
                 t.Store!.Name, t.Type, t.QuantityDelta, t.CreatedAt, t.CreatedBy))
             .ToListAsync(ct);
 
-        return new DashboardDto(totalUnits, variantsAtZeroOrBelow, draftReceipts, inTransit, openStockTakes, recent);
+        var salesQuery = db.Sales.Where(s => s.Status == SaleStatus.Completed);
+        if (storeId is not null)
+            salesQuery = salesQuery.Where(s => s.StoreId == storeId);
+
+        var since = DateTimeOffset.UtcNow.AddDays(-7);
+        var salesTotal = await salesQuery
+            .Where(s => s.CompletedDate >= since)
+            .SelectMany(s => s.Lines)
+            .SumAsync(l => (decimal?)(l.Quantity * l.UnitPrice - l.Discount), ct) ?? 0m;
+
+        var recentSales = await salesQuery
+            .OrderByDescending(s => s.CompletedDate)
+            .Take(5)
+            .Select(s => new DashboardSaleDto(
+                s.Id, "SL-" + s.SequenceNumber.ToString("D4"), s.Store!.Name,
+                s.Lines.Sum(l => l.Quantity * l.UnitPrice - l.Discount),
+                s.CompletedDate!.Value, s.CompletedBy!))
+            .ToListAsync(ct);
+
+        return new DashboardDto(totalUnits, variantsAtZeroOrBelow, draftReceipts, inTransit, openStockTakes,
+            salesTotal, recentSales, recent);
     }
 }

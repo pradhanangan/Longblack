@@ -223,3 +223,41 @@ export interface StockTransferDto {
   updatedBy: string
   lines: StockTransferLineDto[]
 }
+
+export interface SaleLineDto {
+  id: string
+  saleId: string
+  productVariantId: string
+  sku: string
+  barcode: string | null
+  productName: string
+  quantity: number
+  unitPrice: number
+  discount: number
+  lineTotal: number
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+  updatedBy: string
+}
+
+export interface SaleDto {
+  id: string
+  saleNumber: string
+  storeId: string
+  storeName: string
+  status: string
+  paymentType: string | null
+  paymentAmount: number | null
+  total: number
+  completedDate: string | null
+  completedBy: string | null
+  voidedDate: string | null
+  voidedBy: string | null
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+  updatedBy: string
+  lines: SaleLineDto[]
+  negativeStockSkus: string[]
+}
