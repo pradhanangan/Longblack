@@ -86,6 +86,7 @@ export function SaleLineRow({ saleId, line, canEdit }: Props) {
         )}
       </TableCell>
       <TableCell align="right">${line.lineTotal.toFixed(2)}</TableCell>
+      {canEdit && <TableCell align="right">{line.availableQuantity ?? '—'}</TableCell>}
       {canEdit && (
         <TableCell align="right">
           {editing ? (

@@ -19,6 +19,7 @@ public record SaleLineResponse(
     decimal UnitPrice,
     decimal Discount,
     decimal LineTotal,
+    int? AvailableQuantity,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     string CreatedBy,

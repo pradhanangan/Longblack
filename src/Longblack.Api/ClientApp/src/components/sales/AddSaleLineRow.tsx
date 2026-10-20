@@ -105,6 +105,7 @@ export function AddSaleLineRow({ saleId, storeId }: Props) {
         />
       </TableCell>
       <TableCell />
+      <TableCell />
       <TableCell align="right">
         <IconButton color="primary" disabled={!canAdd} onClick={() => mutation.mutate()} aria-label="Add line">
           <AddIcon />

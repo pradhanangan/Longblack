@@ -12,6 +12,8 @@ public record SaleLineDto(
     decimal Discount,
     // Quantity * UnitPrice - Discount.
     decimal LineTotal,
+    // Current stock at the Sale's Store; only populated when fetching a single Sale.
+    int? AvailableQuantity,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     string CreatedBy,

@@ -235,6 +235,7 @@ export interface SaleLineDto {
   unitPrice: number
   discount: number
   lineTotal: number
+  availableQuantity: number | null
   createdAt: string
   updatedAt: string
   createdBy: string

@@ -143,6 +143,6 @@ public class SalesController(ISaleService saleService) : ApiControllerBase
             dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy,
             dto.Lines.Select(l => new SaleLineResponse(
                 l.Id, l.SaleId, l.ProductVariantId, l.Sku, l.Barcode, l.ProductName,
-                l.Quantity, l.UnitPrice, l.Discount, l.LineTotal,
+                l.Quantity, l.UnitPrice, l.Discount, l.LineTotal, l.AvailableQuantity,
                 l.CreatedAt, l.UpdatedAt, l.CreatedBy, l.UpdatedBy)).ToList());
 }

@@ -204,6 +204,7 @@ export function SaleDetailPage() {
               <TableCell align="right">Unit Price</TableCell>
               <TableCell align="right">Discount</TableCell>
               <TableCell align="right">Line Total</TableCell>
+              {canEditLines && <TableCell align="right">Available</TableCell>}
               {canEditLines && <TableCell align="right">Actions</TableCell>}
             </TableRow>
           </TableHead>

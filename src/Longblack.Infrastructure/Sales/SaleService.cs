@@ -38,7 +38,21 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
     public async Task<SaleDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         var sale = await LoadAsync(id, ct);
-        return sale is null ? null : ToDto(sale);
+        if (sale is null)
+            return null;
+
+        var dto = ToDto(sale);
+        var variantIds = sale.Lines.Select(l => l.ProductVariantId).ToList();
+        var stock = await db.Inventory
+            .Where(i => i.StoreId == sale.StoreId && variantIds.Contains(i.ProductVariantId))
+            .ToDictionaryAsync(i => i.ProductVariantId, i => i.Quantity, ct);
+
+        return dto with
+        {
+            Lines = dto.Lines
+                .Select(l => l with { AvailableQuantity = stock.GetValueOrDefault(l.ProductVariantId) })
+                .ToList()
+        };
     }
 
     public async Task<SaleDto> CreateAsync(CreateSaleDto dto, string createdBy, CancellationToken ct = default)
@@ -318,7 +332,7 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
             l.ProductVariant?.Sku ?? string.Empty,
             l.ProductVariant?.Barcode,
             l.ProductVariant?.Product?.Name ?? string.Empty,
-            l.Quantity, l.UnitPrice, l.Discount, LineTotal(l),
+            l.Quantity, l.UnitPrice, l.Discount, LineTotal(l), null,
             l.CreatedAt, l.UpdatedAt, l.CreatedBy, l.UpdatedBy);
 
     private static SaleDto ToDto(Sale s) =>
