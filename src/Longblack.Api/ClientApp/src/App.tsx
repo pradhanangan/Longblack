@@ -13,6 +13,8 @@ import { InventoryListPage } from "./pages/InventoryListPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { ProductListPage } from "./pages/ProductListPage";
+import { PurchaseOrderDetailPage } from "./pages/PurchaseOrderDetailPage";
+import { PurchaseOrderListPage } from "./pages/PurchaseOrderListPage";
 import { SaleDetailPage } from "./pages/SaleDetailPage";
 import { SaleListPage } from "./pages/SaleListPage";
 import { StockTakeDetailPage } from "./pages/StockTakeDetailPage";
@@ -73,6 +75,14 @@ export default function App() {
                     <Route
                       path="/products/:id"
                       element={<ProductDetailPage />}
+                    />
+                    <Route
+                      path="/purchase-orders"
+                      element={<PurchaseOrderListPage />}
+                    />
+                    <Route
+                      path="/purchase-orders/:id"
+                      element={<PurchaseOrderDetailPage />}
                     />
                     <Route
                       path="/goods-receipts"

@@ -4,6 +4,7 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PeopleIcon from "@mui/icons-material/People";
 import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import StoreIcon from "@mui/icons-material/Store";
@@ -39,6 +40,7 @@ const NAV_GROUPS = [
   {
     label: "Operations",
     items: [
+      { label: "Purchase Orders", icon: <ReceiptLongIcon />, path: "/purchase-orders" },
       { label: "Receiving", icon: <LocalShippingIcon />, path: "/goods-receipts" },
       { label: "Inventory", icon: <InventoryIcon />, path: "/inventory" },
       { label: "Stock Take", icon: <ShoppingCartIcon />, path: "/stock-takes" },

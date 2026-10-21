@@ -13,6 +13,10 @@ public class GoodsReceipt
 
     public Guid SupplierId { get; set; }
     public Catalogue.Supplier? Supplier { get; set; }
+
+    // Optional: direct receiving without a Purchase Order stays valid.
+    public Guid? PurchaseOrderId { get; set; }
+    public Purchasing.PurchaseOrder? PurchaseOrder { get; set; }
     public DateTimeOffset ReceivedDate { get; set; }
     public string Status { get; set; } = GoodsReceiptStatus.Draft;
 

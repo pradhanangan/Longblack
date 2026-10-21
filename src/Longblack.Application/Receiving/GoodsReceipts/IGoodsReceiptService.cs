@@ -7,6 +7,9 @@ public interface IGoodsReceiptService
     Task<GoodsReceiptDto> CreateAsync(CreateGoodsReceiptDto dto, string createdBy, CancellationToken ct = default);
     Task<GoodsReceiptDto> UpdateAsync(Guid id, UpdateGoodsReceiptDto dto, string updatedBy, CancellationToken ct = default);
 
+    // Creates a Draft receipt for the Purchase Order's Supplier with lines pre-filled from outstanding quantities and expected costs.
+    Task<GoodsReceiptDto> CreateFromPurchaseOrderAsync(Guid purchaseOrderId, string createdBy, CancellationToken ct = default);
+
     Task<GoodsReceiptDto> AddLineAsync(Guid id, AddGoodsReceiptLineDto dto, string updatedBy, CancellationToken ct = default);
     Task<GoodsReceiptDto> UpdateLineAsync(Guid id, Guid lineId, UpdateGoodsReceiptLineDto dto, string updatedBy, CancellationToken ct = default);
     Task<GoodsReceiptDto> RemoveLineAsync(Guid id, Guid lineId, string updatedBy, CancellationToken ct = default);

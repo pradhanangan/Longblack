@@ -140,6 +140,7 @@ export function GoodsReceiptListPage() {
               <TableRow>
                 <TableCell>Receipt #</TableCell>
                 <TableCell>Supplier</TableCell>
+                <TableCell>Purchase Order</TableCell>
                 <TableCell>Received Date</TableCell>
                 <TableCell>Status</TableCell>
               </TableRow>
@@ -154,6 +155,7 @@ export function GoodsReceiptListPage() {
                 >
                   <TableCell>{r.receiptNumber}</TableCell>
                   <TableCell>{r.supplierName}</TableCell>
+                  <TableCell>{r.purchaseOrderNumber ?? "—"}</TableCell>
                   <TableCell>
                     {new Date(r.receivedDate).toLocaleDateString()}
                   </TableCell>

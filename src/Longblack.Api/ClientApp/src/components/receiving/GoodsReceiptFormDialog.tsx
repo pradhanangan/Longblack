@@ -19,12 +19,13 @@ import { Controller, useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { api } from '../../api/client'
-import type { GoodsReceiptDto, SupplierDto } from '../../api/types'
+import type { GoodsReceiptDto, PurchaseOrderDto, SupplierDto } from '../../api/types'
 import { useSnackbar } from '../../contexts/SnackbarContext'
 
 const schema = z.object({
   supplierId: z.string().min(1, 'Supplier is required'),
   receivedDate: z.string().min(1, 'Received Date is required'),
+  purchaseOrderId: z.string(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -57,21 +58,41 @@ export function GoodsReceiptFormDialog({ open, onClose, goodsReceipt }: Props) {
     control,
     register,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
+
+  const selectedSupplierId = watch('supplierId')
+
+  // Only Issued / PartiallyReceived Purchase Orders for the chosen Supplier can be received against.
+  const { data: purchaseOrders } = useQuery<PurchaseOrderDto[]>({
+    queryKey: ['purchase-orders', 'receivable', selectedSupplierId],
+    queryFn: () => api.get(`/api/purchase-orders?supplierId=${selectedSupplierId}`),
+    enabled: open && !!selectedSupplierId,
+  })
+  const receivableOrders = (purchaseOrders ?? []).filter(
+    (p) =>
+      p.status === 'Issued' || p.status === 'PartiallyReceived' || p.id === goodsReceipt?.purchaseOrderId,
+  )
 
   useEffect(() => {
     if (open) {
       reset({
         supplierId: goodsReceipt?.supplierId ?? '',
         receivedDate: toDateInputValue(goodsReceipt?.receivedDate),
+        purchaseOrderId: goodsReceipt?.purchaseOrderId ?? '',
       })
     }
   }, [open, goodsReceipt, reset])
 
   const mutation = useMutation({
     mutationFn: (values: FormValues) => {
-      const body = { supplierId: values.supplierId, receivedDate: new Date(values.receivedDate).toISOString() }
+      const body = {
+        supplierId: values.supplierId,
+        receivedDate: new Date(values.receivedDate).toISOString(),
+        purchaseOrderId: values.purchaseOrderId || null,
+      }
       return isEdit
         ? api.put<GoodsReceiptDto>(`/api/goods-receipts/${goodsReceipt!.id}`, body)
         : api.post<GoodsReceiptDto>('/api/goods-receipts', body)
@@ -98,7 +119,15 @@ export function GoodsReceiptFormDialog({ open, onClose, goodsReceipt }: Props) {
           render={({ field }) => (
             <FormControl fullWidth margin="normal" error={!!errors.supplierId}>
               <InputLabel>Supplier</InputLabel>
-              <Select {...field} label="Supplier">
+              <Select
+                {...field}
+                label="Supplier"
+                onChange={(e) => {
+                  field.onChange(e)
+                  // A Purchase Order belongs to one Supplier, so changing Supplier clears the link.
+                  setValue('purchaseOrderId', '')
+                }}
+              >
                 {suppliers?.map((s) => (
                   <MenuItem key={s.id} value={s.id}>
                     {s.name}
@@ -106,6 +135,23 @@ export function GoodsReceiptFormDialog({ open, onClose, goodsReceipt }: Props) {
                 ))}
               </Select>
               {errors.supplierId && <FormHelperText>{errors.supplierId.message}</FormHelperText>}
+            </FormControl>
+          )}
+        />
+        <Controller
+          name="purchaseOrderId"
+          control={control}
+          render={({ field }) => (
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Purchase Order (optional)</InputLabel>
+              <Select {...field} label="Purchase Order (optional)" disabled={!selectedSupplierId}>
+                <MenuItem value="">None (direct receiving)</MenuItem>
+                {receivableOrders.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>
+                    {p.poNumber} — {p.status}
+                  </MenuItem>
+                ))}
+              </Select>
             </FormControl>
           )}
         />

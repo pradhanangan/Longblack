@@ -1,5 +1,6 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import {
+  Alert,
   Box,
   Button,
   Chip,
@@ -118,6 +119,16 @@ export function GoodsReceiptDetailPage() {
         <Typography>{receipt.storeName}</Typography>
         <Typography color="text.secondary">Supplier</Typography>
         <Typography>{receipt.supplierName}</Typography>
+        <Typography color="text.secondary">Purchase Order</Typography>
+        <Typography>
+          {receipt.purchaseOrderId ? (
+            <Link to={`/purchase-orders/${receipt.purchaseOrderId}`}>
+              {receipt.purchaseOrderNumber ?? "View"}
+            </Link>
+          ) : (
+            "— (direct receiving)"
+          )}
+        </Typography>
         <Typography color="text.secondary">Received Date</Typography>
         <Typography>
           {new Date(receipt.receivedDate).toLocaleDateString()}
@@ -127,6 +138,13 @@ export function GoodsReceiptDetailPage() {
       </Box>
 
       {/* Action buttons */}
+      {receipt.warnings.length > 0 && (
+        <Alert severity="warning" sx={{ mb: 3, maxWidth: 800 }}>
+          {receipt.warnings.map((w) => (
+            <div key={w}>{w}</div>
+          ))}
+        </Alert>
+      )}
       {isDraft && canWrite && (
         <Box sx={{ display: "flex", gap: 1, mb: 3 }}>
           <Button variant="outlined" onClick={() => setEditOpen(true)}>

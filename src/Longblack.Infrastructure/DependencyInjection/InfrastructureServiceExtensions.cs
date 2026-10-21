@@ -8,6 +8,7 @@ using Longblack.Application.Catalogue.Suppliers;
 using Longblack.Application.Dashboard;
 using Longblack.Application.Inventory;
 using Longblack.Application.Receiving.GoodsReceipts;
+using Longblack.Application.Purchasing;
 using Longblack.Application.StockTake;
 using Longblack.Application.Sales;
 using Longblack.Application.StockTransfers;
@@ -17,6 +18,7 @@ using Longblack.Infrastructure.Catalogue;
 using Longblack.Infrastructure.Dashboard;
 using Longblack.Infrastructure.Inventory;
 using Longblack.Infrastructure.Persistence;
+using Longblack.Infrastructure.Purchasing;
 using Longblack.Infrastructure.Receiving;
 using Longblack.Infrastructure.StockTake;
 using Longblack.Infrastructure.Sales;
@@ -65,6 +67,12 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IStoreService, StoreService>();
         services.AddScoped<IStockTransferService, StockTransferService>();
         services.AddScoped<ISaleService, SaleService>();
+
+        services.Configure<CompanyOptions>(configuration.GetSection(CompanyOptions.SectionName));
+        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+        services.AddSingleton<IPurchaseOrderPdfGenerator, QuestPdfPurchaseOrderPdfGenerator>();
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
+        services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
 
         return services;
     }

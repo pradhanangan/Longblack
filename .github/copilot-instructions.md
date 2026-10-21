@@ -25,7 +25,7 @@ The React frontend lives at `src/Longblack.Api/ClientApp/` and is built as stati
 - **StockTake** records _what was physically counted_ and drives adjustments.
 - Inventory changes must always create an `InventoryTransaction` record (traceable source + user).
 - Purchase cost lives on `GoodsReceiptLine`, not on the product or variant.
-- A Goods Receipt must work **without** a purchase order (PO is a future feature). The `GoodsReceipt` entity should have an optional `purchase_order_id`.
+- A Goods Receipt must work **without** a purchase order (Purchase Orders are in scope per ADR-0005 but optional). The `GoodsReceipt` entity has an optional `purchase_order_id`.
 
 ## Tech Stack
 
@@ -75,4 +75,4 @@ npm run lint      # oxlint
 
 ## What Is Intentionally Out of Scope (MVP)
 
-Do not implement: purchase orders, customer management, promotions, native mobile apps, or container orchestration. See `docs/stocktake-prd.md` section 2.2 for the full list.
+Do not implement: customer management, promotions, native mobile apps, or container orchestration. See `docs/stocktake-prd.md` section 2.2 for the full list.

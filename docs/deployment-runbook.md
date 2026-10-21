@@ -52,7 +52,7 @@ docker compose -f docker-compose.prod.yml up -d longblack-prod-db   # DB only; a
 Copy `db/` to the VPS and apply in order. **Skip seed/test files `002`, `006`, `007`.**
 
 ```bash
-for f in 001-catalogue-schema 003-goods-receiving-schema 004-stock-take-schema 005-multi-store-transfers-schema 008-suppliers-schema; do
+for f in 001-catalogue-schema 003-goods-receiving-schema 004-stock-take-schema 005-multi-store-transfers-schema 008-suppliers-schema 010-purchase-orders-schema; do
   docker exec -i longblack-prod-db psql -U postgres -d Longblack.Prod < db/$f.sql
 done
 ```

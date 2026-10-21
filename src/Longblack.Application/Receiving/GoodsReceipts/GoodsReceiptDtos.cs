@@ -20,6 +20,8 @@ public record GoodsReceiptDto(
     string StoreName,
     Guid SupplierId,
     string SupplierName,
+    Guid? PurchaseOrderId,
+    string? PurchaseOrderNumber,
     DateTimeOffset ReceivedDate,
     string Status,
     string? ReceivedBy,
@@ -27,16 +29,19 @@ public record GoodsReceiptDto(
     DateTimeOffset UpdatedAt,
     string CreatedBy,
     string UpdatedBy,
-    IReadOnlyList<GoodsReceiptLineDto> Lines);
+    IReadOnlyList<GoodsReceiptLineDto> Lines,
+    IReadOnlyList<string> Warnings);
 
 public record CreateGoodsReceiptDto(
     Guid SupplierId,
-    DateTimeOffset? ReceivedDate);
+    DateTimeOffset? ReceivedDate,
+    Guid? PurchaseOrderId = null);
 
 // Header fields are only editable while the receipt is Draft.
 public record UpdateGoodsReceiptDto(
     Guid SupplierId,
-    DateTimeOffset? ReceivedDate);
+    DateTimeOffset? ReceivedDate,
+    Guid? PurchaseOrderId = null);
 
 public record AddGoodsReceiptLineDto(
     Guid ProductVariantId,

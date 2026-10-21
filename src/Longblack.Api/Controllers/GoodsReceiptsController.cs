@@ -34,8 +34,23 @@ public class GoodsReceiptsController(IGoodsReceiptService goodsReceiptService) :
         try
         {
             var receipt = await goodsReceiptService.CreateAsync(
-                new CreateGoodsReceiptDto(request.SupplierId, request.ReceivedDate),
+                new CreateGoodsReceiptDto(request.SupplierId, request.ReceivedDate, request.PurchaseOrderId),
                 CurrentUser, ct);
+            return CreatedAtAction(nameof(GetById), new { id = receipt.Id }, ToResponse(receipt));
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    [HttpPost("from-purchase-order/{purchaseOrderId:guid}")]
+    [Authorize(Roles = "Staff,Manager,Admin")]
+    public async Task<IActionResult> CreateFromPurchaseOrder(Guid purchaseOrderId, CancellationToken ct)
+    {
+        try
+        {
+            var receipt = await goodsReceiptService.CreateFromPurchaseOrderAsync(purchaseOrderId, CurrentUser, ct);
             return CreatedAtAction(nameof(GetById), new { id = receipt.Id }, ToResponse(receipt));
         }
         catch (Exception ex)
@@ -51,7 +66,7 @@ public class GoodsReceiptsController(IGoodsReceiptService goodsReceiptService) :
         try
         {
             var receipt = await goodsReceiptService.UpdateAsync(
-                id, new UpdateGoodsReceiptDto(request.SupplierId, request.ReceivedDate),
+                id, new UpdateGoodsReceiptDto(request.SupplierId, request.ReceivedDate, request.PurchaseOrderId),
                 CurrentUser, ct);
             return Ok(ToResponse(receipt));
         }
@@ -141,9 +156,11 @@ public class GoodsReceiptsController(IGoodsReceiptService goodsReceiptService) :
     }
 
     private static GoodsReceiptResponse ToResponse(GoodsReceiptDto dto) =>
-        new(dto.Id, dto.ReceiptNumber, dto.StoreId, dto.StoreName, dto.SupplierId, dto.SupplierName, dto.ReceivedDate,
+        new(dto.Id, dto.ReceiptNumber, dto.StoreId, dto.StoreName, dto.SupplierId, dto.SupplierName,
+            dto.PurchaseOrderId, dto.PurchaseOrderNumber, dto.ReceivedDate,
             dto.Status, dto.ReceivedBy, dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy,
             dto.Lines.Select(l => new GoodsReceiptLineResponse(
                 l.Id, l.GoodsReceiptId, l.ProductVariantId, l.Sku, l.Barcode,
-                l.Quantity, l.UnitCost, l.CreatedAt, l.UpdatedAt, l.CreatedBy, l.UpdatedBy)).ToList());
+                l.Quantity, l.UnitCost, l.CreatedAt, l.UpdatedAt, l.CreatedBy, l.UpdatedBy)).ToList(),
+            dto.Warnings);
 }

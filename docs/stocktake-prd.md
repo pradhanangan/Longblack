@@ -14,7 +14,7 @@ The initial MVP will focus on:
 - Stock taking
 - Stock variance identification
 
-The system is designed as an extensible foundation for future capabilities such as purchase orders, sales integration, returns, and reporting. Multiple stores and stock transfers (originally future capabilities) are now part of the product — see section 8.1.
+The system is designed as an extensible foundation for future capabilities such as sales integration, returns, and reporting. Multiple stores, stock transfers and purchase orders (originally future capabilities) are now part of the product — see sections 8.1 and 10.
 
 ### 1.2 Target Users
 
@@ -31,7 +31,7 @@ The system is designed as an extensible foundation for future capabilities such 
 - A variant represents a countable/sellable SKU.
 - Stock quantity belongs to inventory, not the product or product variant.
 - Goods can be received without a purchase order.
-- Purchase orders may be introduced later.
+- Purchase orders are optional; when one exists, receiving can be done against it (see section 10).
 - A product must exist before stock can normally be received against it.
 - Product creation during receiving may be supported as an explicit workflow.
 - The system initially uses one currency.
@@ -64,7 +64,7 @@ The following are intentionally outside the MVP:
 - Full warehouse management (bins, picking, putaway)
 - Customer management
 - Supplier portal
-- Advanced purchasing workflows
+- Advanced purchasing workflows (basic Purchase Orders are in scope — see section 10)
 - Complex pricing/promotions
 - Accounting integration
 - Forecasting
@@ -459,11 +459,13 @@ This allows the current quantity to be understood from historical activity.
 
 ---
 
-# 10. Purchase Orders — Future Capability
+# 10. Purchase Orders
 
-Purchase Orders are not mandatory for MVP receiving.
+Purchase Orders are in scope (see ADR-0005) but are not mandatory for receiving: goods can still be received directly.
 
-The future model will be:
+A Purchase Order targets one Supplier and the Warehouse Store. Statuses: `Draft` → `Issued` → `PartiallyReceived` → `Received`, plus `Closed` (manual force-close) and `Cancelled`. The PO number (`PO-0001`) is assigned on `Issued` and lines are locked from then on. Issuing makes a PDF available, which can be emailed to the Supplier or marked as sent manually (`SentAt`/`SentBy`); each send is logged. Manager/Admin create and issue; only Admin cancels an issued PO; Staff are read-only. Reorder suggestions, tax, freight and multi-currency are out of scope.
+
+The model:
 
 ```text
 PurchaseOrder
@@ -701,7 +703,7 @@ Setup
   └── Settings
 ```
 
-Purchase Orders can be added later:
+Purchase Orders sit under their own navigation entry:
 
 ```text
 Purchasing
@@ -1140,4 +1142,4 @@ The most important design principle for the MVP is:
 
 > **ProductVariant identifies what the stock item is; GoodsReceipt records what arrived; Inventory records what the system currently has; StockTake records what was physically counted.**
 
-This separation gives you a simple first release while leaving a clean path to add **Purchase Orders, multiple stores, transfers, sales, returns and warehouse management** later.
+This separation gives you a simple first release while leaving a clean path to add **returns, warehouse management and further reporting** later.

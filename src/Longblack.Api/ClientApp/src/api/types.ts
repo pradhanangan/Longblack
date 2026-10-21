@@ -96,6 +96,8 @@ export interface GoodsReceiptDto {
   storeName: string
   supplierId: string
   supplierName: string
+  purchaseOrderId: string | null
+  purchaseOrderNumber: string | null
   receivedDate: string
   status: string
   receivedBy: string | null
@@ -104,6 +106,64 @@ export interface GoodsReceiptDto {
   createdBy: string
   updatedBy: string
   lines: GoodsReceiptLineDto[]
+  warnings: string[]
+}
+
+export interface PurchaseOrderLineDto {
+  id: string
+  purchaseOrderId: string
+  productVariantId: string
+  sku: string
+  barcode: string | null
+  quantity: number
+  unitCost: number
+  receivedQuantity: number
+  outstandingQuantity: number
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+  updatedBy: string
+}
+
+export interface PurchaseOrderSendDto {
+  id: string
+  recipient: string
+  cc: string | null
+  succeeded: boolean
+  error: string | null
+  sentAt: string
+  sentBy: string
+}
+
+export interface LinkedGoodsReceiptDto {
+  id: string
+  receiptNumber: string
+  status: string
+  receivedDate: string
+}
+
+export interface PurchaseOrderDto {
+  id: string
+  poNumber: string | null
+  supplierId: string
+  supplierName: string
+  supplierEmail: string
+  expectedDeliveryDate: string | null
+  notes: string | null
+  status: string
+  isOverdue: boolean
+  issuedAt: string | null
+  issuedBy: string | null
+  sentAt: string | null
+  sentBy: string | null
+  total: number
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+  updatedBy: string
+  lines: PurchaseOrderLineDto[]
+  sends: PurchaseOrderSendDto[]
+  goodsReceipts: LinkedGoodsReceiptDto[]
 }
 
 export interface InventoryDto {

@@ -5,12 +5,20 @@ Recording stock that physically arrives at the store from a supplier, and the re
 ## Language
 
 **Goods Receipt**:
-A record of a delivery of stock arriving at the Warehouse Store (the only Store a Goods Receipt can target), containing one or more lines. Progresses through `Draft` → `Received` → (optionally, from `Draft` only) `Cancelled`. Marking a receipt `Received` is the action that increases inventory; a `Received` receipt is then immutable.
+A record of a delivery of stock arriving at the Warehouse Store (the only Store a Goods Receipt can target), containing one or more lines. Progresses through `Draft` → `Received` → (optionally, from `Draft` only) `Cancelled`. Marking a receipt `Received` is the action that increases inventory; a `Received` receipt is then immutable. May optionally reference one Purchase Order from the same Supplier; lines are then pre-filled with outstanding quantities, may only be for variants on that Purchase Order, and may exceed the ordered quantity with a warning rather than a block.
 _Avoid_: Delivery, shipment, receiving order
 
 **Goods Receipt Line**:
 A single product variant + quantity + unit cost entry within a Goods Receipt. Multiple lines for the same variant on one receipt are allowed (e.g. separate cartons at different costs).
 _Avoid_: Receipt item, line item
+
+**Purchase Order**:
+A request to one Supplier for stock, destined for the Warehouse Store, containing one or more Purchase Order Lines. Progresses `Draft` → `Issued` → `PartiallyReceived` → `Received`, with `Closed` (forced by a Manager/Admin when the Supplier short-ships) and `Cancelled` (from `Draft`, or from `Issued` by an Admin only, while nothing has been received). Receiving can occur against any `Issued` Purchase Order. Its number (`PO-0001`) is assigned on `Issued`, and from then on its lines are locked; changing an issued Purchase Order means cancelling and recreating it. Issuing makes a PDF available, which can be emailed to the Supplier or manually marked as sent (recorded as `SentAt`/`SentBy`, not a status); every send is logged. Created and issued by Manager or Admin; Staff read-only. Receiving does not require a Purchase Order — direct receiving remains valid.
+_Avoid_: PO order, order, requisition
+
+**Purchase Order Line**:
+A single product variant + ordered quantity + expected unit cost within a Purchase Order. Its received quantity is derived from `Received` Goods Receipts linked to the Purchase Order. The expected unit cost only pre-fills the Goods Receipt Line; the Goods Receipt Line's actual cost is authoritative.
+_Avoid_: Order item, line item
 
 **Supplier**:
 A reference-data entity identifying who a Goods Receipt's stock came from, with a unique `Code`, `Name`, required `Email`, required `Phone`, and a `Status` (`Active`/`Inactive`). A Goods Receipt references exactly one Supplier by FK. Admin-only create/edit/status change, matching the `Brand`/`Colour`/`Size` reference-data convention. Supersedes the earlier free-text `SupplierCode` design — see [ADR-0004](./docs/adr/0004-introduce-supplier-entity.md) (supersedes [ADR-0001](./docs/adr/0001-supplier-code-instead-of-supplier-entity.md)).

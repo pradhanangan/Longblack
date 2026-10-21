@@ -1,6 +1,7 @@
 using Longblack.Domain.Catalogue;
 using Longblack.Domain.Identity;
 using Longblack.Domain.Inventory;
+using Longblack.Domain.Purchasing;
 using Longblack.Domain.Receiving;
 using Longblack.Domain.StockTransfers;
 using Longblack.Domain.Sales;
@@ -33,6 +34,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<StockTransferLine> StockTransferLines => Set<StockTransferLine>();
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleLine> SaleLines => Set<SaleLine>();
+    public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+    public DbSet<PurchaseOrderLine> PurchaseOrderLines => Set<PurchaseOrderLine>();
+    public DbSet<PurchaseOrderSend> PurchaseOrderSends => Set<PurchaseOrderSend>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -203,6 +207,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.HasIndex(g => g.SequenceNumber).IsUnique();
             e.Property(g => g.StoreId).HasColumnName("store_id");
             e.Property(g => g.SupplierId).HasColumnName("supplier_id");
+            e.Property(g => g.PurchaseOrderId).HasColumnName("purchase_order_id");
             e.Property(g => g.ReceivedDate).HasColumnName("received_date").IsRequired();
             e.Property(g => g.Status).HasColumnName("status").IsRequired();
             e.Property(g => g.ReceivedBy).HasColumnName("received_by");
@@ -212,6 +217,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(g => g.UpdatedBy).HasColumnName("updated_by").IsRequired();
             e.HasOne(g => g.Store).WithMany().HasForeignKey(g => g.StoreId);
             e.HasOne(g => g.Supplier).WithMany().HasForeignKey(g => g.SupplierId);
+            e.HasOne(g => g.PurchaseOrder).WithMany().HasForeignKey(g => g.PurchaseOrderId);
             e.HasMany(g => g.Lines).WithOne(l => l.GoodsReceipt).HasForeignKey(l => l.GoodsReceiptId);
         });
 
@@ -428,6 +434,64 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(l => l.UpdatedBy).HasColumnName("updated_by").IsRequired();
             e.HasIndex(l => new { l.SaleId, l.ProductVariantId }).IsUnique();
             e.HasOne(l => l.ProductVariant).WithMany().HasForeignKey(l => l.ProductVariantId);
+        });
+        // Backs PurchaseOrder.SequenceNumber so PO numbers (PO-0001) are assigned atomically by Postgres on issue.
+        builder.HasSequence<int>("purchase_order_seq").StartsAt(1);
+
+        builder.Entity<PurchaseOrder>(e =>
+        {
+            e.ToTable("purchase_orders");
+            e.HasKey(p => p.Id);
+            e.Property(p => p.Id).HasColumnName("id");
+            e.Property(p => p.SequenceNumber).HasColumnName("sequence_number");
+            e.HasIndex(p => p.SequenceNumber).IsUnique();
+            e.Property(p => p.SupplierId).HasColumnName("supplier_id");
+            e.Property(p => p.ExpectedDeliveryDate).HasColumnName("expected_delivery_date");
+            e.Property(p => p.Notes).HasColumnName("notes");
+            e.Property(p => p.Status).HasColumnName("status").IsRequired();
+            e.Property(p => p.IssuedAt).HasColumnName("issued_at");
+            e.Property(p => p.IssuedBy).HasColumnName("issued_by");
+            e.Property(p => p.SentAt).HasColumnName("sent_at");
+            e.Property(p => p.SentBy).HasColumnName("sent_by");
+            e.Property(p => p.CreatedAt).HasColumnName("created_at");
+            e.Property(p => p.UpdatedAt).HasColumnName("updated_at");
+            e.Property(p => p.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(p => p.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasOne(p => p.Supplier).WithMany().HasForeignKey(p => p.SupplierId);
+            e.HasMany(p => p.Lines).WithOne(l => l.PurchaseOrder).HasForeignKey(l => l.PurchaseOrderId);
+            e.HasMany(p => p.Sends).WithOne(s => s.PurchaseOrder).HasForeignKey(s => s.PurchaseOrderId);
+        });
+
+        // PurchaseOrderLine — unique per (PurchaseOrderId, ProductVariantId): at most one line per variant per PO.
+        builder.Entity<PurchaseOrderLine>(e =>
+        {
+            e.ToTable("purchase_order_lines");
+            e.HasKey(l => l.Id);
+            e.Property(l => l.Id).HasColumnName("id");
+            e.Property(l => l.PurchaseOrderId).HasColumnName("purchase_order_id");
+            e.Property(l => l.ProductVariantId).HasColumnName("product_variant_id");
+            e.Property(l => l.Quantity).HasColumnName("quantity").IsRequired();
+            e.Property(l => l.UnitCost).HasColumnName("unit_cost").HasPrecision(10, 2);
+            e.Property(l => l.CreatedAt).HasColumnName("created_at");
+            e.Property(l => l.UpdatedAt).HasColumnName("updated_at");
+            e.Property(l => l.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(l => l.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasIndex(l => new { l.PurchaseOrderId, l.ProductVariantId }).IsUnique();
+            e.HasOne(l => l.ProductVariant).WithMany().HasForeignKey(l => l.ProductVariantId);
+        });
+
+        builder.Entity<PurchaseOrderSend>(e =>
+        {
+            e.ToTable("purchase_order_sends");
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Id).HasColumnName("id");
+            e.Property(s => s.PurchaseOrderId).HasColumnName("purchase_order_id");
+            e.Property(s => s.Recipient).HasColumnName("recipient").IsRequired();
+            e.Property(s => s.Cc).HasColumnName("cc");
+            e.Property(s => s.Succeeded).HasColumnName("succeeded");
+            e.Property(s => s.Error).HasColumnName("error");
+            e.Property(s => s.SentAt).HasColumnName("sent_at");
+            e.Property(s => s.SentBy).HasColumnName("sent_by").IsRequired();
         });
     }
 }

@@ -27,7 +27,7 @@ The development database is available to the host at `localhost:35432`. The API'
 Apply the hand-written application schema scripts. Skip `002`, `006` and `007`, which are seed/test scripts:
 
 ```powershell
-foreach ($f in "001-catalogue-schema","003-goods-receiving-schema","004-stock-take-schema","005-multi-store-transfers-schema","008-suppliers-schema") {
+foreach ($f in "001-catalogue-schema","003-goods-receiving-schema","004-stock-take-schema","005-multi-store-transfers-schema","008-suppliers-schema","010-purchase-orders-schema") {
   Get-Content "db\$f.sql" -Raw | docker exec -i Longblack.Db psql -v ON_ERROR_STOP=1 -U postgres -d Longblack.App
 }
 ```
@@ -151,7 +151,7 @@ At a high level:
    Apply the hand-written business-schema scripts in order, skipping `002`, `006`, and `007`:
 
    ```bash
-   for f in 001-catalogue-schema 003-goods-receiving-schema 004-stock-take-schema 005-multi-store-transfers-schema 008-suppliers-schema; do
+   for f in 001-catalogue-schema 003-goods-receiving-schema 004-stock-take-schema 005-multi-store-transfers-schema 008-suppliers-schema 010-purchase-orders-schema; do
      docker exec -i longblack-prod-db psql -v ON_ERROR_STOP=1 -U postgres -d Longblack.Prod < "db/$f.sql"
    done
    ```
