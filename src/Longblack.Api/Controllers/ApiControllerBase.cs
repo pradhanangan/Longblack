@@ -7,8 +7,12 @@ namespace Longblack.Api.Controllers;
 [Route("api/[controller]")]
 public abstract class ApiControllerBase : ControllerBase
 {
+    // The token's name claim is blank for users without a first/last name, so fall back to their email.
     protected string CurrentUser =>
-        User.Identity?.Name ?? "unknown";
+        FirstNonBlank(User.Identity?.Name, User.FindFirst("name")?.Value, User.FindFirst("email")?.Value) ?? "unknown";
+
+    private static string? FirstNonBlank(params string?[] values) =>
+        values.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
 
     protected IActionResult HandleException(Exception ex) => ex switch
     {

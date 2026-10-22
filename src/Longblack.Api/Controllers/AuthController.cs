@@ -59,7 +59,10 @@ public class AuthController(
             new(JwtRegisteredClaimNames.Sub, user.Id),
             new(JwtRegisteredClaimNames.Email, user.Email!),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(JwtRegisteredClaimNames.Name, $"{user.FirstName} {user.LastName}".Trim())
+            new(JwtRegisteredClaimNames.Name,
+                string.IsNullOrWhiteSpace($"{user.FirstName} {user.LastName}")
+                    ? user.Email!
+                    : $"{user.FirstName} {user.LastName}".Trim())
         };
 
         claims.AddRange(roles.Select(role => new Claim("role", role)));
