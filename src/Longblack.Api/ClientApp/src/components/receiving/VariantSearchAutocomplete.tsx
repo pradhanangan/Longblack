@@ -2,7 +2,7 @@ import { Autocomplete, TextField } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { api } from '../../api/client'
-import type { ProductDto, ProductVariantDto } from '../../api/types'
+import type { ProductDto, ProductVariantDto, PagedResult } from '../../api/types'
 
 export interface VariantOption extends ProductVariantDto {
   productName: string
@@ -20,9 +20,9 @@ interface Props {
 // Reuses the product search endpoint (GET /api/products?q=) rather than a dedicated variant-search
 // endpoint: it already matches on SKU/barcode/name and only loads matched results.
 function useVariantSearch(query: string) {
-  return useQuery<ProductDto[]>({
+  return useQuery<PagedResult<ProductDto>>({
     queryKey: ['products', 'variant-search', query],
-    queryFn: () => api.get(`/api/products?q=${encodeURIComponent(query)}`),
+    queryFn: () => api.get(`/api/products?q=${encodeURIComponent(query)}&pageSize=20`),
     enabled: query.trim().length >= 2,
     staleTime: 30_000,
   })
@@ -30,9 +30,9 @@ function useVariantSearch(query: string) {
 
 export function VariantSearchAutocomplete({ value, onChange, disabled, error, helperText }: Props) {
   const [inputValue, setInputValue] = useState('')
-  const { data: products, isFetching } = useVariantSearch(inputValue)
+  const { data, isFetching } = useVariantSearch(inputValue)
 
-  const options: VariantOption[] = (products ?? []).flatMap((p) =>
+  const options: VariantOption[] = (data?.items ?? []).flatMap((p) =>
     (p.variants ?? [])
       .filter((v) => v.status === 'Active')
       .map((v) => ({ ...v, productName: p.name })),

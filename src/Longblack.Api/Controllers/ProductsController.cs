@@ -1,4 +1,5 @@
 using Longblack.Application.Catalogue.Products;
+using Longblack.Application.Common.Paging;
 using Longblack.Api.Models.Catalogue;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,11 +15,14 @@ public class ProductsController(IProductService productService) : ApiControllerB
         [FromQuery] Guid? categoryId,
         [FromQuery] string? status,
         [FromQuery] string? q,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
         CancellationToken ct)
     {
-        var filter = new ListProductsFilter(brandId, categoryId, status, q);
-        var products = await productService.ListAsync(filter, ct);
-        return Ok(products.Select(ToResponse));
+        var filter = new ListProductsFilter(brandId, categoryId, status, q, PageRequest.Create(page, pageSize));
+        var result = await productService.ListAsync(filter, ct);
+        return Ok(new PagedResult<ProductResponse>(
+            result.Items.Select(ToResponse).ToList(), result.Total, result.Page, result.PageSize));
     }
 
     [HttpGet("suggest-code")]

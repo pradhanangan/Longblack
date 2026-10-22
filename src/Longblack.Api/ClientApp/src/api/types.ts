@@ -62,6 +62,13 @@ export interface ProductDto {
   variants?: ProductVariantDto[]
 }
 
+export interface PagedResult<T> {
+  items: T[]
+  total: number
+  page: number
+  pageSize: number
+}
+
 export interface GoodsReceiptLineDto {
   id: string
   goodsReceiptId: string

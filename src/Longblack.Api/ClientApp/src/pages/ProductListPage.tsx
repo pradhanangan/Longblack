@@ -18,11 +18,21 @@ import {
   Typography,
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { useDeferredValue, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useDeferredValue, useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
-import type { BrandDto, CategoryDto, ProductDto } from "../api/types";
+import type {
+  BrandDto,
+  CategoryDto,
+  PagedResult,
+  ProductDto,
+} from "../api/types";
 import { renderCategoryMenuItems } from "../components/categories/CategorySelectItems";
+import { GridPagination } from "../components/common/GridPagination";
+import {
+  DEFAULT_PAGE_SIZE,
+  PAGE_SIZE_OPTIONS,
+} from "../components/common/pagination";
 import { ProductFormDialog } from "../components/products/ProductFormDialog";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -31,16 +41,20 @@ function useProducts(
   brandId: string,
   categoryId: string,
   status: string,
+  page: number,
+  pageSize: number,
 ) {
   const params = new URLSearchParams();
   if (q) params.set("q", q);
   if (brandId) params.set("brandId", brandId);
   if (categoryId) params.set("categoryId", categoryId);
   if (status) params.set("status", status);
-  const qs = params.toString();
-  return useQuery<ProductDto[]>({
-    queryKey: ["products", q, brandId, categoryId, status],
-    queryFn: () => api.get(`/api/products${qs ? `?${qs}` : ""}`),
+  params.set("page", String(page));
+  params.set("pageSize", String(pageSize));
+  return useQuery<PagedResult<ProductDto>>({
+    queryKey: ["products", q, brandId, categoryId, status, page, pageSize],
+    queryFn: () => api.get(`/api/products?${params.toString()}`),
+    placeholderData: (previous) => previous,
   });
 }
 
@@ -66,22 +80,56 @@ export function ProductListPage() {
   const canWrite =
     user?.roles.some((r) => r === "Manager" || r === "Admin") ?? false;
 
-  const [searchInput, setSearchInput] = useState("");
-  const [brandId, setBrandId] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [status, setStatus] = useState("Active");
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Status defaults to Active only when the parameter is absent; an explicit empty value means "All".
+  const searchInput = searchParams.get("q") ?? "";
+  const brandId = searchParams.get("brandId") ?? "";
+  const categoryId = searchParams.get("categoryId") ?? "";
+  const status = searchParams.get("status") ?? "Active";
+  const page = Math.max(1, Number(searchParams.get("page")) || 1);
+  const requestedSize = Number(searchParams.get("pageSize"));
+  const pageSize = PAGE_SIZE_OPTIONS.includes(requestedSize)
+    ? requestedSize
+    : DEFAULT_PAGE_SIZE;
 
   const [addOpen, setAddOpen] = useState(false);
+
+  // Any change other than paging itself returns to page 1.
+  function updateParams(patch: Record<string, string>, keepPage = false) {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        for (const [key, value] of Object.entries(patch)) {
+          if (value === "" && key !== "status") next.delete(key);
+          else next.set(key, value);
+        }
+        if (!keepPage) next.delete("page");
+        return next;
+      },
+      { replace: true },
+    );
+  }
 
   const deferredSearch = useDeferredValue(searchInput);
 
   const {
-    data: products,
+    data,
     isLoading,
     isError,
-  } = useProducts(deferredSearch, brandId, categoryId, status);
+  } = useProducts(deferredSearch, brandId, categoryId, status, page, pageSize);
+  const products = data?.items;
+  const total = data?.total ?? 0;
   const { data: brands } = useBrands();
   const { data: categories } = useCategories();
+
+  // A stale URL or removed rows can leave the page past the end; step back to the last page.
+  const lastPage = Math.max(1, Math.ceil(total / pageSize));
+  useEffect(() => {
+    if (data && page > lastPage) {
+      updateParams({ page: String(lastPage) }, true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, page, lastPage]);
 
   return (
     <Box>
@@ -108,7 +156,7 @@ export function ProductListPage() {
         <TextField
           label="Search"
           value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
+          onChange={(e) => updateParams({ q: e.target.value })}
           placeholder="Name, code, SKU, barcode…"
           sx={{ minWidth: 220 }}
         />
@@ -117,7 +165,7 @@ export function ProductListPage() {
           <Select
             value={brandId}
             label="Brand"
-            onChange={(e) => setBrandId(e.target.value)}
+            onChange={(e) => updateParams({ brandId: e.target.value })}
           >
             <MenuItem value="">All brands</MenuItem>
             {brands?.map((b) => (
@@ -132,7 +180,7 @@ export function ProductListPage() {
           <Select
             value={categoryId}
             label="Category"
-            onChange={(e) => setCategoryId(e.target.value)}
+            onChange={(e) => updateParams({ categoryId: e.target.value })}
           >
             <MenuItem value="">All categories</MenuItem>
             {renderCategoryMenuItems(categories)}
@@ -143,7 +191,7 @@ export function ProductListPage() {
           <Select
             value={status}
             label="Status"
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => updateParams({ status: e.target.value })}
           >
             <MenuItem value="Active">Active</MenuItem>
             <MenuItem value="Inactive">Inactive</MenuItem>
@@ -165,39 +213,48 @@ export function ProductListPage() {
             No products match the current filters.
           </Typography>
         ) : (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Code</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Brand</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell>Status</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {products.map((p) => (
-                <TableRow
-                  key={p.id}
-                  hover
-                  onClick={() => navigate(`/products/${p.id}`)}
-                  sx={{ cursor: "pointer" }}
-                >
-                  <TableCell>{p.productCode}</TableCell>
-                  <TableCell>{p.name}</TableCell>
-                  <TableCell>{p.brandName ?? "—"}</TableCell>
-                  <TableCell>{p.categoryName ?? "—"}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={p.status}
-                      size="small"
-                      color={p.status === "Active" ? "success" : "default"}
-                    />
-                  </TableCell>
+          <>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Code</TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Brand</TableCell>
+                  <TableCell>Category</TableCell>
+                  <TableCell>Status</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {products.map((p) => (
+                  <TableRow
+                    key={p.id}
+                    hover
+                    onClick={() => navigate(`/products/${p.id}`)}
+                    sx={{ cursor: "pointer" }}
+                  >
+                    <TableCell>{p.productCode}</TableCell>
+                    <TableCell>{p.name}</TableCell>
+                    <TableCell>{p.brandName ?? "—"}</TableCell>
+                    <TableCell>{p.categoryName ?? "—"}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={p.status}
+                        size="small"
+                        color={p.status === "Active" ? "success" : "default"}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <GridPagination
+              total={total}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={(p) => updateParams({ page: String(p) }, true)}
+              onPageSizeChange={(s) => updateParams({ pageSize: String(s) })}
+            />
+          </>
         ))}
     </Box>
   );

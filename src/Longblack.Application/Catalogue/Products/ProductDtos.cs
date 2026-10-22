@@ -1,4 +1,5 @@
 using Longblack.Application.Catalogue.ProductVariants;
+using Longblack.Application.Common.Paging;
 
 namespace Longblack.Application.Catalogue.Products;
 
@@ -38,4 +39,5 @@ public record ListProductsFilter(
     Guid? BrandId,
     Guid? CategoryId,
     string? Status,
-    string? SearchQuery);
+    string? SearchQuery,
+    PageRequest Page);

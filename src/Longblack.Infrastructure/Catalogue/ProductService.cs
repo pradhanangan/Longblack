@@ -1,6 +1,7 @@
 using Longblack.Application.Catalogue.ProductVariants;
 using Longblack.Application.Catalogue.Products;
 using Longblack.Application.Common.Exceptions;
+using Longblack.Application.Common.Paging;
 using Longblack.Domain.Catalogue;
 using Longblack.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -9,12 +10,9 @@ namespace Longblack.Infrastructure.Catalogue;
 
 public class ProductService(AppDbContext db) : IProductService
 {
-    public async Task<IReadOnlyList<ProductDto>> ListAsync(ListProductsFilter filter, CancellationToken ct = default)
+    public async Task<PagedResult<ProductDto>> ListAsync(ListProductsFilter filter, CancellationToken ct = default)
     {
-        var query = db.Products
-            .Include(p => p.Brand)
-            .Include(p => p.Category).ThenInclude(c => c!.ParentCategory)
-            .AsQueryable();
+        var query = db.Products.AsQueryable();
 
         if (filter.Status is not null)
             query = query.Where(p => p.Status == filter.Status);
@@ -30,19 +28,37 @@ public class ProductService(AppDbContext db) : IProductService
         if (!string.IsNullOrWhiteSpace(filter.SearchQuery))
         {
             var q = filter.SearchQuery.ToLower();
-            query = query
-                .Include(p => p.Variants).ThenInclude(v => v.Colour)
-                .Include(p => p.Variants).ThenInclude(v => v.Size)
-                .Where(p =>
-                    p.Name.ToLower().Contains(q) ||
-                    p.ProductCode.ToLower().Contains(q) ||
-                    p.Variants.Any(v => v.Sku.ToLower().Contains(q) ||
-                                        (v.Barcode != null && v.Barcode.ToLower().Contains(q))));
+            query = query.Where(p =>
+                p.Name.ToLower().Contains(q) ||
+                p.ProductCode.ToLower().Contains(q) ||
+                p.Variants.Any(v => v.Sku.ToLower().Contains(q) ||
+                                    (v.Barcode != null && v.Barcode.ToLower().Contains(q))));
         }
 
-        var products = await query.OrderBy(p => p.Name).ToListAsync(ct);
+        var total = await query.CountAsync(ct);
 
-        return products.Select(p => ToDtoWithVariants(p, filter.SearchQuery)).ToList();
+        // Count runs before the Includes so the page query alone loads related data.
+        IQueryable<Product> pageQuery = query
+            .Include(p => p.Brand)
+            .Include(p => p.Category).ThenInclude(c => c!.ParentCategory);
+
+        if (!string.IsNullOrWhiteSpace(filter.SearchQuery))
+            pageQuery = pageQuery
+                .Include(p => p.Variants).ThenInclude(v => v.Colour)
+                .Include(p => p.Variants).ThenInclude(v => v.Size);
+
+        var products = await pageQuery
+            .OrderBy(p => p.ProductCode)
+            .ThenBy(p => p.Id)
+            .Skip(filter.Page.Skip)
+            .Take(filter.Page.PageSize)
+            .ToListAsync(ct);
+
+        return new PagedResult<ProductDto>(
+            products.Select(p => ToDtoWithVariants(p, filter.SearchQuery)).ToList(),
+            total,
+            filter.Page.Page,
+            filter.Page.PageSize);
     }
 
     public async Task<ProductDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
