@@ -24,13 +24,10 @@ export function AppLayout() {
         <Box
           component="footer"
           sx={{
-            position: "sticky",
-            bottom: 0,
             px: 3,
             py: 1,
             bgcolor: "background.paper",
             textAlign: "right",
-            zIndex: (t) => t.zIndex.appBar,
           }}
         >
           <Typography variant="body2" color="text.secondary">
