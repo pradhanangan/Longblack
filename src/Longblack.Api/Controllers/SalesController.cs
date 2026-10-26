@@ -1,5 +1,6 @@
 using Longblack.Api.Models.Sales;
 using Longblack.Application.Sales;
+using Longblack.Application.Common.Paging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,10 +16,16 @@ public class SalesController(ISaleService saleService) : ApiControllerBase
         [FromQuery] Guid? storeId,
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
         CancellationToken ct)
     {
-        var sales = await saleService.ListAsync(new ListSalesFilter(status, storeId, from, to), ct);
-        return Ok(sales.Select(ToResponse));
+        var paging = PageRequest.CreateOptional(page, pageSize);
+        var sales = await saleService.ListAsync(new ListSalesFilter(status, storeId, from, to), paging, ct);
+        if (paging is null)
+            return Ok(sales.Items.Select(ToResponse));
+        return Ok(new PagedResult<SaleResponse>(
+            sales.Items.Select(ToResponse).ToList(), sales.Total, sales.Page, sales.PageSize));
     }
 
     [HttpGet("{id:guid}")]

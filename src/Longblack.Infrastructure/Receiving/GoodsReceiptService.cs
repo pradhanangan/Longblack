@@ -1,4 +1,5 @@
 using Longblack.Application.Common.Exceptions;
+using Longblack.Application.Common.Paging;
 using Longblack.Application.Inventory;
 using Longblack.Application.Purchasing;
 using Longblack.Application.Receiving.GoodsReceipts;
@@ -18,7 +19,7 @@ public class GoodsReceiptService(
     IStoreService storeService,
     IPurchaseOrderService purchaseOrderService) : IGoodsReceiptService
 {
-    public async Task<IReadOnlyList<GoodsReceiptDto>> ListAsync(ListGoodsReceiptsFilter filter, CancellationToken ct = default)
+    public async Task<PagedResult<GoodsReceiptDto>> ListAsync(ListGoodsReceiptsFilter filter, PageRequest? page = null, CancellationToken ct = default)
     {
         var query = db.GoodsReceipts
             .Include(g => g.Store)
@@ -33,8 +34,8 @@ public class GoodsReceiptService(
         if (filter.SupplierId is not null)
             query = query.Where(g => g.SupplierId == filter.SupplierId);
 
-        var receipts = await query.OrderByDescending(g => g.SequenceNumber).ToListAsync(ct);
-        return receipts.Select(g => ToDto(g, [])).ToList();
+        return await query.OrderByDescending(g => g.SequenceNumber).ThenBy(g => g.Id)
+            .ToPagedResultAsync(page, g => ToDto(g, []), ct);
     }
 
     public async Task<GoodsReceiptDto?> GetByIdAsync(Guid id, CancellationToken ct = default)

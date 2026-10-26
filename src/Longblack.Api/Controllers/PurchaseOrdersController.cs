@@ -1,5 +1,6 @@
 using Longblack.Api.Models.Purchasing;
 using Longblack.Application.Purchasing;
+using Longblack.Application.Common.Paging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,10 +18,16 @@ public class PurchaseOrdersController(IPurchaseOrderService purchaseOrderService
         [FromQuery] Guid? supplierId,
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
         CancellationToken ct)
     {
-        var orders = await purchaseOrderService.ListAsync(new ListPurchaseOrdersFilter(status, supplierId, from, to), ct);
-        return Ok(orders.Select(ToResponse));
+        var paging = PageRequest.CreateOptional(page, pageSize);
+        var orders = await purchaseOrderService.ListAsync(new ListPurchaseOrdersFilter(status, supplierId, from, to), paging, ct);
+        if (paging is null)
+            return Ok(orders.Items.Select(ToResponse));
+        return Ok(new PagedResult<PurchaseOrderResponse>(
+            orders.Items.Select(ToResponse).ToList(), orders.Total, orders.Page, orders.PageSize));
     }
 
     [HttpGet("{id:guid}")]

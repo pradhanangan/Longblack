@@ -1,4 +1,5 @@
 using Longblack.Application.Common.Exceptions;
+using Longblack.Application.Common.Paging;
 using Longblack.Application.Inventory;
 using Longblack.Application.StockTake;
 using Longblack.Domain.Catalogue;
@@ -13,7 +14,7 @@ namespace Longblack.Infrastructure.StockTake;
 
 public class StockTakeService(AppDbContext db, IInventoryService inventoryService) : IStockTakeService
 {
-    public async Task<IReadOnlyList<StockTakeDto>> ListAsync(ListStockTakesFilter filter, CancellationToken ct = default)
+    public async Task<PagedResult<StockTakeDto>> ListAsync(ListStockTakesFilter filter, PageRequest? page = null, CancellationToken ct = default)
     {
         var query = db.StockTakes
             .Include(s => s.Store)
@@ -24,8 +25,8 @@ public class StockTakeService(AppDbContext db, IInventoryService inventoryServic
         if (!string.IsNullOrWhiteSpace(filter.Status))
             query = query.Where(s => s.Status == filter.Status);
 
-        var stockTakes = await query.OrderByDescending(s => s.SequenceNumber).ToListAsync(ct);
-        return stockTakes.Select(s => ToDto(s, [])).ToList();
+        return await query.OrderByDescending(s => s.SequenceNumber).ThenBy(s => s.Id)
+            .ToPagedResultAsync(page, s => ToDto(s, []), ct);
     }
 
     public async Task<StockTakeDto?> GetByIdAsync(Guid id, CancellationToken ct = default)

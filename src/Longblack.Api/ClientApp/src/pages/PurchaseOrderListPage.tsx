@@ -23,6 +23,8 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { PurchaseOrderDto, SupplierDto } from "../api/types";
 import { PurchaseOrderFormDialog } from "../components/purchasing/PurchaseOrderFormDialog";
+import { GridPagination } from "../components/common/GridPagination";
+import { usePagedList } from "../components/common/usePagedList";
 import {
   purchaseOrderStatusColor,
   purchaseOrderStatusLabel,
@@ -54,11 +56,7 @@ function usePurchaseOrders(
     end.setHours(23, 59, 59, 999);
     params.set("to", end.toISOString());
   }
-  const qs = params.toString();
-  return useQuery<PurchaseOrderDto[]>({
-    queryKey: ["purchase-orders", status, supplierId, from, to],
-    queryFn: () => api.get(`/api/purchase-orders${qs ? `?${qs}` : ""}`),
-  });
+  return usePagedList<PurchaseOrderDto>("purchase-orders", params);
 }
 
 export function PurchaseOrderListPage() {
@@ -74,7 +72,8 @@ export function PurchaseOrderListPage() {
   const [createOpen, setCreateOpen] = useState(false);
 
   const {
-    data: orders,
+    items: orders,
+    pagination,
     isLoading,
     isError,
   } = usePurchaseOrders(status, supplierId, from, to);
@@ -85,7 +84,7 @@ export function PurchaseOrderListPage() {
   });
 
   return (
-    <Box>
+    <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
       <Toolbar
         disableGutters
         sx={{ justifyContent: "space-between", gap: 1, mb: 3 }}
@@ -156,19 +155,32 @@ export function PurchaseOrderListPage() {
         />
       </Box>
 
-      {isLoading && <CircularProgress />}
-      {isError && (
-        <Typography color="error">Failed to load purchase orders.</Typography>
+      {(isLoading || isError || orders?.length === 0) && (
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+          }}
+        >
+          {isLoading ? (
+            <CircularProgress />
+          ) : isError ? (
+            <Typography color="error">
+              Failed to load purchase orders.
+            </Typography>
+          ) : (
+            <Typography color="text.secondary">
+              No purchase orders match the current filters.
+            </Typography>
+          )}
+        </Box>
       )}
 
-      {!isLoading &&
-        !isError &&
-        orders &&
-        (orders.length === 0 ? (
-          <Typography color="text.secondary">
-            No purchase orders match the current filters.
-          </Typography>
-        ) : (
+      {!isLoading && !isError && orders && orders.length > 0 && (
+        <>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -215,7 +227,9 @@ export function PurchaseOrderListPage() {
               ))}
             </TableBody>
           </Table>
-        ))}
+          <GridPagination {...pagination} />
+        </>
+      )}
     </Box>
   );
 }

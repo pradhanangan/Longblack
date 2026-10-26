@@ -7,6 +7,10 @@ public record PageRequest(int Page, int PageSize)
     public const int DefaultPageSize = 25;
     public const int MaxPageSize = 100;
 
+    // Full-list lookup callers omit both parameters.
+    public static PageRequest? CreateOptional(int? page, int? pageSize) =>
+        page.HasValue || pageSize.HasValue ? Create(page, pageSize) : null;
+
     // Invalid or missing values fall back to defaults; oversized pages are capped rather than rejected.
     public static PageRequest Create(int? page, int? pageSize) =>
         new(

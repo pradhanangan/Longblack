@@ -22,25 +22,29 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { StockTransferDto, StoreDto } from "../api/types";
 import { StockTransferFormDialog } from "../components/stockTransfers/StockTransferFormDialog";
+import { GridPagination } from "../components/common/GridPagination";
+import { usePagedList } from "../components/common/usePagedList";
 import { useAuth } from "../contexts/AuthContext";
 
-function statusColor(status: string): "default" | "success" | "error" | "warning" {
+function statusColor(
+  status: string,
+): "default" | "success" | "error" | "warning" {
   if (status === "Received") return "success";
   if (status === "Cancelled") return "error";
   if (status === "Dispatched") return "warning";
   return "default";
 }
 
-function useStockTransfers(status: string, sourceStoreId: string, destinationStoreId: string) {
+function useStockTransfers(
+  status: string,
+  sourceStoreId: string,
+  destinationStoreId: string,
+) {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
   if (sourceStoreId) params.set("sourceStoreId", sourceStoreId);
   if (destinationStoreId) params.set("destinationStoreId", destinationStoreId);
-  const qs = params.toString();
-  return useQuery<StockTransferDto[]>({
-    queryKey: ["stock-transfers", status, sourceStoreId, destinationStoreId],
-    queryFn: () => api.get(`/api/stock-transfers${qs ? `?${qs}` : ""}`),
-  });
+  return usePagedList<StockTransferDto>("stock-transfers", params);
 }
 
 function useStores() {
@@ -55,7 +59,9 @@ export function StockTransferListPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const canCreate =
-    user?.roles.some((r) => r === "Staff" || r === "Manager" || r === "Admin") ?? false;
+    user?.roles.some(
+      (r) => r === "Staff" || r === "Manager" || r === "Admin",
+    ) ?? false;
 
   const [status, setStatus] = useState("");
   const [sourceStoreId, setSourceStoreId] = useState("");
@@ -63,14 +69,15 @@ export function StockTransferListPage() {
   const [createOpen, setCreateOpen] = useState(false);
 
   const {
-    data: transfers,
+    items: transfers,
+    pagination,
     isLoading,
     isError,
   } = useStockTransfers(status, sourceStoreId, destinationStoreId);
   const { data: stores } = useStores();
 
   return (
-    <Box>
+    <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
       <Toolbar
         disableGutters
         sx={{ justifyContent: "space-between", gap: 1, mb: 3 }}
@@ -87,7 +94,10 @@ export function StockTransferListPage() {
         )}
       </Toolbar>
 
-      <StockTransferFormDialog open={createOpen} onClose={() => setCreateOpen(false)} />
+      <StockTransferFormDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+      />
 
       <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
         <FormControl size="small" sx={{ minWidth: 160 }}>
@@ -136,19 +146,32 @@ export function StockTransferListPage() {
         </FormControl>
       </Box>
 
-      {isLoading && <CircularProgress />}
-      {isError && (
-        <Typography color="error">Failed to load Stock Transfers.</Typography>
+      {(isLoading || isError || transfers?.length === 0) && (
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+          }}
+        >
+          {isLoading ? (
+            <CircularProgress />
+          ) : isError ? (
+            <Typography color="error">
+              Failed to load Stock Transfers.
+            </Typography>
+          ) : (
+            <Typography color="text.secondary">
+              No Stock Transfers match the current filters.
+            </Typography>
+          )}
+        </Box>
       )}
 
-      {!isLoading &&
-        !isError &&
-        transfers &&
-        (transfers.length === 0 ? (
-          <Typography color="text.secondary">
-            No Stock Transfers match the current filters.
-          </Typography>
-        ) : (
+      {!isLoading && !isError && transfers && transfers.length > 0 && (
+        <>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -192,7 +215,9 @@ export function StockTransferListPage() {
               ))}
             </TableBody>
           </Table>
-        ))}
+          <GridPagination {...pagination} />
+        </>
+      )}
     </Box>
   );
 }

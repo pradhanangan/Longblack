@@ -1,5 +1,6 @@
 using Longblack.Api.Models.Receiving;
 using Longblack.Application.Receiving.GoodsReceipts;
+using Longblack.Application.Common.Paging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,11 +14,17 @@ public class GoodsReceiptsController(IGoodsReceiptService goodsReceiptService) :
     public async Task<IActionResult> List(
         [FromQuery] string? status,
         [FromQuery] Guid? supplierId,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
         CancellationToken ct)
     {
         var filter = new ListGoodsReceiptsFilter(status, supplierId);
-        var receipts = await goodsReceiptService.ListAsync(filter, ct);
-        return Ok(receipts.Select(ToResponse));
+        var paging = PageRequest.CreateOptional(page, pageSize);
+        var receipts = await goodsReceiptService.ListAsync(filter, paging, ct);
+        if (paging is null)
+            return Ok(receipts.Items.Select(ToResponse));
+        return Ok(new PagedResult<GoodsReceiptResponse>(
+            receipts.Items.Select(ToResponse).ToList(), receipts.Total, receipts.Page, receipts.PageSize));
     }
 
     [HttpGet("{id:guid}")]

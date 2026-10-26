@@ -1,8 +1,10 @@
+using Longblack.Application.Common.Paging;
+
 namespace Longblack.Application.Inventory;
 
 public interface IInventoryService
 {
-    Task<IReadOnlyList<InventoryDto>> ListAsync(ListInventoryFilter filter, CancellationToken ct = default);
+    Task<PagedResult<InventoryDto>> ListAsync(ListInventoryFilter filter, PageRequest? page = null, CancellationToken ct = default);
     // Returns null only if the variant itself doesn't exist; a variant with no Inventory row yet
     // (never received/transferred in) still returns a DTO with Quantity 0. storeId null defaults
     // to the Warehouse Store.

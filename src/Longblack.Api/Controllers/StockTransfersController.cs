@@ -1,5 +1,6 @@
 using Longblack.Api.Models.StockTransfers;
 using Longblack.Application.StockTransfers;
+using Longblack.Application.Common.Paging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,11 +15,17 @@ public class StockTransfersController(IStockTransferService stockTransferService
         [FromQuery] string? status,
         [FromQuery] Guid? sourceStoreId,
         [FromQuery] Guid? destinationStoreId,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
         CancellationToken ct)
     {
         var filter = new ListStockTransfersFilter(status, sourceStoreId, destinationStoreId);
-        var transfers = await stockTransferService.ListAsync(filter, ct);
-        return Ok(transfers.Select(ToResponse));
+        var paging = PageRequest.CreateOptional(page, pageSize);
+        var transfers = await stockTransferService.ListAsync(filter, paging, ct);
+        if (paging is null)
+            return Ok(transfers.Items.Select(ToResponse));
+        return Ok(new PagedResult<StockTransferResponse>(
+            transfers.Items.Select(ToResponse).ToList(), transfers.Total, transfers.Page, transfers.PageSize));
     }
 
     [HttpGet("{id:guid}")]

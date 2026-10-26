@@ -1,4 +1,5 @@
 using Longblack.Application.Catalogue.Suppliers;
+using Longblack.Application.Common.Paging;
 using Longblack.Api.Models.Catalogue;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,10 +10,18 @@ namespace Longblack.Api.Controllers;
 public class SuppliersController(ISupplierService supplierService) : ApiControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] string? status, CancellationToken ct)
+    public async Task<IActionResult> List(
+        [FromQuery] string? status,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
+        CancellationToken ct)
     {
-        var suppliers = await supplierService.ListAsync(status, ct);
-        return Ok(suppliers.Select(ToResponse));
+        var paging = PageRequest.CreateOptional(page, pageSize);
+        var suppliers = await supplierService.ListAsync(status, paging, ct);
+        if (paging is null)
+            return Ok(suppliers.Items.Select(ToResponse));
+        return Ok(new PagedResult<SupplierResponse>(
+            suppliers.Items.Select(ToResponse).ToList(), suppliers.Total, suppliers.Page, suppliers.PageSize));
     }
 
     [HttpGet("{id:guid}")]

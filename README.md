@@ -70,6 +70,24 @@ Build the solution from the repository root:
 dotnet build Longblack.slnx
 ```
 
+## List pagination
+
+The Products, Inventory, Suppliers, Stores, Goods Receipts, Purchase Orders,
+Sales, Stock Takes, and Stock Transfers list pages use server-side pagination.
+The default is 25 rows, with 10, 25, 50, and 100 rows available. Changing a filter
+or the page size returns to page 1; lists recover to the last available page if
+records are removed from the current result set.
+
+Pass `page` (1-based) and `pageSize` to a list API to receive
+`{ items, total, page, pageSize }`. `total` counts all matching records before
+paging. Invalid or missing paging values default to page 1 and 25 rows, and
+page sizes above 100 are capped. Results retain their existing sort order, with
+an ID tie-breaker to keep page boundaries deterministic.
+
+Except for `/api/products`, which always returns a paged result, omitting both
+paging parameters preserves the full-array response used by dropdowns and
+other lookup callers. Detail-page line items and settings tables are not paged.
+
 ## Run the production-like stack locally
 
 This runs Caddy, the API with the built React app, and PostgreSQL in Docker. It has a separate Compose project, database (`Longblack.Prod`) and data volume from the development stack.

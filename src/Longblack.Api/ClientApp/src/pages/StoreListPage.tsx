@@ -16,22 +16,18 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../api/client";
 import type { StoreDto } from "../api/types";
 import { StoreFormDialog } from "../components/stores/StoreFormDialog";
+import { GridPagination } from "../components/common/GridPagination";
+import { usePagedList } from "../components/common/usePagedList";
 import { useAuth } from "../contexts/AuthContext";
 
 function useStores(status: string) {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
-  const qs = params.toString();
-  return useQuery<StoreDto[]>({
-    queryKey: ["stores", status],
-    queryFn: () => api.get(`/api/stores${qs ? `?${qs}` : ""}`),
-  });
+  return usePagedList<StoreDto>("stores", params);
 }
 
 export function StoreListPage() {
@@ -42,10 +38,10 @@ export function StoreListPage() {
   const [status, setStatus] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
 
-  const { data: stores, isLoading, isError } = useStores(status);
+  const { items: stores, pagination, isLoading, isError } = useStores(status);
 
   return (
-    <Box>
+    <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
       <Toolbar
         disableGutters
         sx={{ justifyContent: "space-between", gap: 1, mb: 3 }}
@@ -79,19 +75,30 @@ export function StoreListPage() {
         </FormControl>
       </Box>
 
-      {isLoading && <CircularProgress />}
-      {isError && (
-        <Typography color="error">Failed to load stores.</Typography>
+      {(isLoading || isError || stores?.length === 0) && (
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+          }}
+        >
+          {isLoading ? (
+            <CircularProgress />
+          ) : isError ? (
+            <Typography color="error">Failed to load stores.</Typography>
+          ) : (
+            <Typography color="text.secondary">
+              No stores match the current filters.
+            </Typography>
+          )}
+        </Box>
       )}
 
-      {!isLoading &&
-        !isError &&
-        stores &&
-        (stores.length === 0 ? (
-          <Typography color="text.secondary">
-            No stores match the current filters.
-          </Typography>
-        ) : (
+      {!isLoading && !isError && stores && stores.length > 0 && (
+        <>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -121,7 +128,9 @@ export function StoreListPage() {
               ))}
             </TableBody>
           </Table>
-        ))}
+          <GridPagination {...pagination} />
+        </>
+      )}
     </Box>
   );
 }

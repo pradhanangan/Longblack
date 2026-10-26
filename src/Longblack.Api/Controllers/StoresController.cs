@@ -1,5 +1,6 @@
 using Longblack.Api.Models.Stores;
 using Longblack.Application.Stores;
+using Longblack.Application.Common.Paging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,10 +10,18 @@ namespace Longblack.Api.Controllers;
 public class StoresController(IStoreService storeService) : ApiControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] string? status, CancellationToken ct)
+    public async Task<IActionResult> List(
+        [FromQuery] string? status,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
+        CancellationToken ct)
     {
-        var stores = await storeService.ListAsync(status, ct);
-        return Ok(stores.Select(ToResponse));
+        var paging = PageRequest.CreateOptional(page, pageSize);
+        var stores = await storeService.ListAsync(status, paging, ct);
+        if (paging is null)
+            return Ok(stores.Items.Select(ToResponse));
+        return Ok(new PagedResult<StoreResponse>(
+            stores.Items.Select(ToResponse).ToList(), stores.Total, stores.Page, stores.PageSize));
     }
 
     [HttpGet("{id:guid}")]

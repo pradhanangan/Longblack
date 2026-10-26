@@ -1,8 +1,10 @@
+using Longblack.Application.Common.Paging;
+
 namespace Longblack.Application.StockTransfers;
 
 public interface IStockTransferService
 {
-    Task<IReadOnlyList<StockTransferDto>> ListAsync(ListStockTransfersFilter filter, CancellationToken ct = default);
+    Task<PagedResult<StockTransferDto>> ListAsync(ListStockTransfersFilter filter, PageRequest? page = null, CancellationToken ct = default);
     Task<StockTransferDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
     // Rejects: neither side is the Warehouse Store, or source == destination.

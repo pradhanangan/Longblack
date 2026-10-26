@@ -1,8 +1,10 @@
+using Longblack.Application.Common.Paging;
+
 namespace Longblack.Application.Sales;
 
 public interface ISaleService
 {
-    Task<IReadOnlyList<SaleDto>> ListAsync(ListSalesFilter filter, CancellationToken ct = default);
+    Task<PagedResult<SaleDto>> ListAsync(ListSalesFilter filter, PageRequest? page = null, CancellationToken ct = default);
     Task<SaleDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
     // Rejects Closed Stores. The Warehouse Store may sell.

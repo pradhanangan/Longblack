@@ -1,4 +1,5 @@
 using Longblack.Application.Common.Exceptions;
+using Longblack.Application.Common.Paging;
 using Longblack.Application.Purchasing;
 using Longblack.Domain.Catalogue;
 using Longblack.Domain.Purchasing;
@@ -15,7 +16,7 @@ public class PurchaseOrderService(
     IEmailSender emailSender,
     IOptions<CompanyOptions> companyOptions) : IPurchaseOrderService
 {
-    public async Task<IReadOnlyList<PurchaseOrderDto>> ListAsync(ListPurchaseOrdersFilter filter, CancellationToken ct = default)
+    public async Task<PagedResult<PurchaseOrderDto>> ListAsync(ListPurchaseOrdersFilter filter, PageRequest? page = null, CancellationToken ct = default)
     {
         var query = db.PurchaseOrders
             .Include(p => p.Supplier)
@@ -34,13 +35,12 @@ public class PurchaseOrderService(
         if (filter.To is not null)
             query = query.Where(p => p.CreatedAt <= filter.To);
 
-        var orders = await query
+        return await query
             .OrderByDescending(p => p.SequenceNumber == null)
             .ThenByDescending(p => p.SequenceNumber)
             .ThenByDescending(p => p.CreatedAt)
-            .ToListAsync(ct);
-
-        return orders.Select(p => ToDto(p, new Dictionary<Guid, int>(), [])).ToList();
+            .ThenBy(p => p.Id)
+            .ToPagedResultAsync(page, p => ToDto(p, new Dictionary<Guid, int>(), []), ct);
     }
 
     public async Task<PurchaseOrderDto?> GetByIdAsync(Guid id, CancellationToken ct = default)

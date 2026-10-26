@@ -1,5 +1,6 @@
 using Longblack.Api.Models.StockTake;
 using Longblack.Application.StockTake;
+using Longblack.Application.Common.Paging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,11 +11,19 @@ namespace Longblack.Api.Controllers;
 public class StockTakesController(IStockTakeService stockTakeService) : ApiControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] string? status, CancellationToken ct)
+    public async Task<IActionResult> List(
+        [FromQuery] string? status,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
+        CancellationToken ct)
     {
         var filter = new ListStockTakesFilter(status);
-        var stockTakes = await stockTakeService.ListAsync(filter, ct);
-        return Ok(stockTakes.Select(ToResponse));
+        var paging = PageRequest.CreateOptional(page, pageSize);
+        var stockTakes = await stockTakeService.ListAsync(filter, paging, ct);
+        if (paging is null)
+            return Ok(stockTakes.Items.Select(ToResponse));
+        return Ok(new PagedResult<StockTakeResponse>(
+            stockTakes.Items.Select(ToResponse).ToList(), stockTakes.Total, stockTakes.Page, stockTakes.PageSize));
     }
 
     [HttpGet("{id:guid}")]

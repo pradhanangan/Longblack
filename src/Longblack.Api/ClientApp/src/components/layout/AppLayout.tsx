@@ -18,7 +18,15 @@ export function AppLayout() {
           flexDirection: "column",
         }}
       >
-        <Box sx={{ flexGrow: 1, px: 3, pb: 3 }}>
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+            px: 3,
+            pb: 3,
+          }}
+        >
           <Outlet />
         </Box>
         <Box

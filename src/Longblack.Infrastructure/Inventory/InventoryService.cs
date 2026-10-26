@@ -1,4 +1,5 @@
 using Longblack.Application.Inventory;
+using Longblack.Application.Common.Paging;
 using Longblack.Application.Stores;
 using Longblack.Domain.Catalogue;
 using Longblack.Domain.Inventory;
@@ -9,7 +10,7 @@ namespace Longblack.Infrastructure.Inventory;
 
 public class InventoryService(AppDbContext db, IStoreService storeService) : IInventoryService
 {
-    public async Task<IReadOnlyList<InventoryDto>> ListAsync(ListInventoryFilter filter, CancellationToken ct = default)
+    public async Task<PagedResult<InventoryDto>> ListAsync(ListInventoryFilter filter, PageRequest? page = null, CancellationToken ct = default)
     {
         var storeId = filter.StoreId ?? await storeService.GetWarehouseStoreIdAsync(ct);
 
@@ -48,20 +49,21 @@ public class InventoryService(AppDbContext db, IStoreService storeService) : IIn
                 v.Product!.ProductCode.ToLower().Contains(q));
         }
 
-        var variants = await query.OrderBy(v => v.Sku).ToListAsync(ct);
+        var variants = await query.OrderBy(v => v.Sku).ThenBy(v => v.Id)
+            .ToPagedResultAsync(page, v => v, ct);
 
         var store = await db.Stores.FirstAsync(s => s.Id == storeId, ct);
 
         // Left-join semantics: fetch existing Inventory rows for these variants at this Store and
         // default to zero for any variant that has never had one created there.
-        var variantIds = variants.Select(v => v.Id).ToList();
+        var variantIds = variants.Items.Select(v => v.Id).ToList();
         var inventoryByVariantId = await db.Inventory
             .Where(i => i.StoreId == storeId && variantIds.Contains(i.ProductVariantId))
             .ToDictionaryAsync(i => i.ProductVariantId, i => i, ct);
 
-        return variants
+        return new PagedResult<InventoryDto>(variants.Items
             .Select(v => ToDto(v, store, inventoryByVariantId.GetValueOrDefault(v.Id)))
-            .ToList();
+            .ToList(), variants.Total, variants.Page, variants.PageSize);
     }
 
     public async Task<InventoryDto?> GetByVariantIdAsync(Guid productVariantId, Guid? storeId = null, CancellationToken ct = default)

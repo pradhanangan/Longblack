@@ -1,4 +1,5 @@
 using Longblack.Application.Common.Exceptions;
+using Longblack.Application.Common.Paging;
 using Longblack.Application.Stores;
 using Longblack.Domain.Stores;
 using Longblack.Infrastructure.Persistence;
@@ -8,15 +9,15 @@ namespace Longblack.Infrastructure.Stores;
 
 public class StoreService(AppDbContext db) : IStoreService
 {
-    public async Task<IReadOnlyList<StoreDto>> ListAsync(string? status = null, CancellationToken ct = default)
+    public async Task<PagedResult<StoreDto>> ListAsync(string? status = null, PageRequest? page = null, CancellationToken ct = default)
     {
         var query = db.Stores.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(status))
             query = query.Where(s => s.Status == status);
 
-        var stores = await query.OrderBy(s => s.Name).ToListAsync(ct);
-        return stores.Select(ToDto).ToList();
+        return await query.OrderBy(s => s.Name).ThenBy(s => s.Id)
+            .ToPagedResultAsync(page, ToDto, ct);
     }
 
     public async Task<StoreDto?> GetByIdAsync(Guid id, CancellationToken ct = default)

@@ -1,5 +1,6 @@
 using Longblack.Api.Models.Inventory;
 using Longblack.Application.Inventory;
+using Longblack.Application.Common.Paging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,11 +16,17 @@ public class InventoryController(IInventoryService inventoryService) : ApiContro
         [FromQuery] Guid? categoryId,
         [FromQuery] string? status,
         [FromQuery] Guid? storeId,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
         CancellationToken ct)
     {
         var filter = new ListInventoryFilter(q, brandId, categoryId, status, storeId);
-        var inventory = await inventoryService.ListAsync(filter, ct);
-        return Ok(inventory.Select(ToResponse));
+        var paging = PageRequest.CreateOptional(page, pageSize);
+        var inventory = await inventoryService.ListAsync(filter, paging, ct);
+        if (paging is null)
+            return Ok(inventory.Items.Select(ToResponse));
+        return Ok(new PagedResult<InventoryResponse>(
+            inventory.Items.Select(ToResponse).ToList(), inventory.Total, inventory.Page, inventory.PageSize));
     }
 
     [HttpGet("{productVariantId:guid}")]

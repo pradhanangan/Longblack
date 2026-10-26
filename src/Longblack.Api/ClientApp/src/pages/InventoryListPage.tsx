@@ -22,6 +22,8 @@ import { api } from "../api/client";
 import type { BrandDto, CategoryDto, StoreDto } from "../api/types";
 import { renderCategoryMenuItems } from "../components/categories/CategorySelectItems";
 import type { InventoryDto } from "../api/types";
+import { GridPagination } from "../components/common/GridPagination";
+import { usePagedList } from "../components/common/usePagedList";
 
 function useInventory(
   q: string,
@@ -38,10 +40,7 @@ function useInventory(
   // Always sent (Active/Inactive/All) — unlike Products, "All" must be an explicit value the
   // backend can distinguish from "not provided" (which defaults to Active).
   params.set("status", status);
-  return useQuery<InventoryDto[]>({
-    queryKey: ["inventory", q, brandId, categoryId, status, storeId],
-    queryFn: () => api.get(`/api/inventory?${params.toString()}`),
-  });
+  return usePagedList<InventoryDto>("inventory", params);
 }
 
 function useBrands() {
@@ -81,7 +80,8 @@ export function InventoryListPage() {
   const deferredSearch = useDeferredValue(searchInput);
 
   const {
-    data: inventory,
+    items: inventory,
+    pagination,
     isLoading,
     isError,
   } = useInventory(deferredSearch, brandId, categoryId, status, storeId);
@@ -97,7 +97,7 @@ export function InventoryListPage() {
   }, [stores, storeId]);
 
   return (
-    <Box>
+    <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
       <Toolbar disableGutters sx={{ mb: 3 }}>
         <Typography variant="h5">Inventory</Typography>
       </Toolbar>
@@ -165,19 +165,30 @@ export function InventoryListPage() {
         </FormControl>
       </Box>
 
-      {isLoading && <CircularProgress />}
-      {isError && (
-        <Typography color="error">Failed to load inventory.</Typography>
+      {(isLoading || isError || inventory?.length === 0) && (
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+          }}
+        >
+          {isLoading ? (
+            <CircularProgress />
+          ) : isError ? (
+            <Typography color="error">Failed to load inventory.</Typography>
+          ) : (
+            <Typography color="text.secondary">
+              No inventory items match the current filters.
+            </Typography>
+          )}
+        </Box>
       )}
 
-      {!isLoading &&
-        !isError &&
-        inventory &&
-        (inventory.length === 0 ? (
-          <Typography color="text.secondary">
-            No variants match the current filters.
-          </Typography>
-        ) : (
+      {!isLoading && !isError && inventory && inventory.length > 0 && (
+        <>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -221,7 +232,9 @@ export function InventoryListPage() {
               ))}
             </TableBody>
           </Table>
-        ))}
+          <GridPagination {...pagination} />
+        </>
+      )}
     </Box>
   );
 }

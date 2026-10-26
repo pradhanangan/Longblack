@@ -1,8 +1,10 @@
+using Longblack.Application.Common.Paging;
+
 namespace Longblack.Application.Receiving.GoodsReceipts;
 
 public interface IGoodsReceiptService
 {
-    Task<IReadOnlyList<GoodsReceiptDto>> ListAsync(ListGoodsReceiptsFilter filter, CancellationToken ct = default);
+    Task<PagedResult<GoodsReceiptDto>> ListAsync(ListGoodsReceiptsFilter filter, PageRequest? page = null, CancellationToken ct = default);
     Task<GoodsReceiptDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<GoodsReceiptDto> CreateAsync(CreateGoodsReceiptDto dto, string createdBy, CancellationToken ct = default);
     Task<GoodsReceiptDto> UpdateAsync(Guid id, UpdateGoodsReceiptDto dto, string updatedBy, CancellationToken ct = default);

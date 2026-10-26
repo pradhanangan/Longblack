@@ -19,22 +19,20 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { api } from "../api/client";
 import type { SupplierDto } from "../api/types";
 import { SupplierFormDialog } from "../components/suppliers/SupplierFormDialog";
+import { GridPagination } from "../components/common/GridPagination";
+import { usePagedList } from "../components/common/usePagedList";
 import { useAuth } from "../contexts/AuthContext";
 import { useSnackbar } from "../contexts/SnackbarContext";
 
 function useSuppliers(status: string) {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
-  const qs = params.toString();
-  return useQuery<SupplierDto[]>({
-    queryKey: ["suppliers", status],
-    queryFn: () => api.get(`/api/suppliers${qs ? `?${qs}` : ""}`),
-  });
+  return usePagedList<SupplierDto>("suppliers", params);
 }
 
 export function SupplierListPage() {
@@ -47,7 +45,12 @@ export function SupplierListPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editSupplier, setEditSupplier] = useState<SupplierDto | undefined>();
 
-  const { data: suppliers, isLoading, isError } = useSuppliers(status);
+  const {
+    items: suppliers,
+    pagination,
+    isLoading,
+    isError,
+  } = useSuppliers(status);
 
   const setStatusMutation = useMutation({
     mutationFn: (vars: { id: string; status: string }) =>
@@ -63,7 +66,7 @@ export function SupplierListPage() {
   });
 
   return (
-    <Box>
+    <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
       <Toolbar
         disableGutters
         sx={{ justifyContent: "space-between", gap: 1, mb: 3 }}
@@ -80,7 +83,10 @@ export function SupplierListPage() {
         )}
       </Toolbar>
 
-      <SupplierFormDialog open={createOpen} onClose={() => setCreateOpen(false)} />
+      <SupplierFormDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+      />
       <SupplierFormDialog
         open={!!editSupplier}
         onClose={() => setEditSupplier(undefined)}
@@ -102,19 +108,30 @@ export function SupplierListPage() {
         </FormControl>
       </Box>
 
-      {isLoading && <CircularProgress />}
-      {isError && (
-        <Typography color="error">Failed to load suppliers.</Typography>
+      {(isLoading || isError || suppliers?.length === 0) && (
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+          }}
+        >
+          {isLoading ? (
+            <CircularProgress />
+          ) : isError ? (
+            <Typography color="error">Failed to load suppliers.</Typography>
+          ) : (
+            <Typography color="text.secondary">
+              No suppliers match the current filters.
+            </Typography>
+          )}
+        </Box>
       )}
 
-      {!isLoading &&
-        !isError &&
-        suppliers &&
-        (suppliers.length === 0 ? (
-          <Typography color="text.secondary">
-            No suppliers match the current filters.
-          </Typography>
-        ) : (
+      {!isLoading && !isError && suppliers && suppliers.length > 0 && (
+        <>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -167,7 +184,9 @@ export function SupplierListPage() {
               ))}
             </TableBody>
           </Table>
-        ))}
+          <GridPagination {...pagination} />
+        </>
+      )}
     </Box>
   );
 }

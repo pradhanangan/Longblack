@@ -1,8 +1,10 @@
+using Longblack.Application.Common.Paging;
+
 namespace Longblack.Application.Purchasing;
 
 public interface IPurchaseOrderService
 {
-    Task<IReadOnlyList<PurchaseOrderDto>> ListAsync(ListPurchaseOrdersFilter filter, CancellationToken ct = default);
+    Task<PagedResult<PurchaseOrderDto>> ListAsync(ListPurchaseOrdersFilter filter, PageRequest? page = null, CancellationToken ct = default);
     Task<PurchaseOrderDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<PurchaseOrderDto> CreateAsync(CreatePurchaseOrderDto dto, string createdBy, CancellationToken ct = default);
     Task<PurchaseOrderDto> UpdateAsync(Guid id, UpdatePurchaseOrderDto dto, string updatedBy, CancellationToken ct = default);

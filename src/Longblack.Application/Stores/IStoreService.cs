@@ -1,8 +1,10 @@
+using Longblack.Application.Common.Paging;
+
 namespace Longblack.Application.Stores;
 
 public interface IStoreService
 {
-    Task<IReadOnlyList<StoreDto>> ListAsync(string? status = null, CancellationToken ct = default);
+    Task<PagedResult<StoreDto>> ListAsync(string? status = null, PageRequest? page = null, CancellationToken ct = default);
     Task<StoreDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
     // Rejects a second Type = Warehouse Store (exactly one must ever exist).

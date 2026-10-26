@@ -1,4 +1,5 @@
 using Longblack.Application.Common.Exceptions;
+using Longblack.Application.Common.Paging;
 using Longblack.Application.Inventory;
 using Longblack.Application.Sales;
 using Longblack.Domain.Catalogue;
@@ -12,7 +13,7 @@ namespace Longblack.Infrastructure.Sales;
 
 public class SaleService(AppDbContext db, IInventoryService inventoryService) : ISaleService
 {
-    public async Task<IReadOnlyList<SaleDto>> ListAsync(ListSalesFilter filter, CancellationToken ct = default)
+    public async Task<PagedResult<SaleDto>> ListAsync(ListSalesFilter filter, PageRequest? page = null, CancellationToken ct = default)
     {
         var query = db.Sales
             .Include(s => s.Store)
@@ -31,8 +32,8 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
         if (filter.To is not null)
             query = query.Where(s => s.CreatedAt <= filter.To);
 
-        var sales = await query.OrderByDescending(s => s.SequenceNumber).ToListAsync(ct);
-        return sales.Select(s => ToDto(s)).ToList();
+        return await query.OrderByDescending(s => s.SequenceNumber).ThenBy(s => s.Id)
+            .ToPagedResultAsync(page, ToDto, ct);
     }
 
     public async Task<SaleDto?> GetByIdAsync(Guid id, CancellationToken ct = default)

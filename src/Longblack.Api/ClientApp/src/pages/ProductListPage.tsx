@@ -132,7 +132,7 @@ export function ProductListPage() {
   }, [data, page, lastPage]);
 
   return (
-    <Box>
+    <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
       <Toolbar
         disableGutters
         sx={{ justifyContent: "space-between", gap: 1, mb: 3 }}
@@ -200,19 +200,32 @@ export function ProductListPage() {
         </FormControl>
       </Box>
 
-      {isLoading && <CircularProgress />}
-      {isError && (
-        <Typography color="error">Failed to load products.</Typography>
+      {(isLoading || isError || products?.length === 0) && (
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+          }}
+        >
+          {isLoading ? (
+            <CircularProgress />
+          ) : isError ? (
+            <Typography color="error">Failed to load products.</Typography>
+          ) : (
+            <Typography color="text.secondary">
+              No products match the current filters.
+            </Typography>
+          )}
+        </Box>
       )}
 
       {!isLoading &&
         !isError &&
         products &&
-        (products.length === 0 ? (
-          <Typography color="text.secondary">
-            No products match the current filters.
-          </Typography>
-        ) : (
+        products.length > 0 && (
           <>
             <Table size="small">
               <TableHead>
@@ -255,7 +268,7 @@ export function ProductListPage() {
               onPageSizeChange={(s) => updateParams({ pageSize: String(s) })}
             />
           </>
-        ))}
+        )}
     </Box>
   );
 }

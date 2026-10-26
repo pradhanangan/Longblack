@@ -1,8 +1,10 @@
+using Longblack.Application.Common.Paging;
+
 namespace Longblack.Application.StockTake;
 
 public interface IStockTakeService
 {
-    Task<IReadOnlyList<StockTakeDto>> ListAsync(ListStockTakesFilter filter, CancellationToken ct = default);
+    Task<PagedResult<StockTakeDto>> ListAsync(ListStockTakesFilter filter, PageRequest? page = null, CancellationToken ct = default);
     Task<StockTakeDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<StockTakeDto> CreateAsync(CreateStockTakeDto dto, string createdBy, CancellationToken ct = default);
 

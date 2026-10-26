@@ -1,4 +1,5 @@
 using Longblack.Application.Common.Exceptions;
+using Longblack.Application.Common.Paging;
 using Longblack.Application.Inventory;
 using Longblack.Application.StockTransfers;
 using Longblack.Application.Stores;
@@ -13,7 +14,7 @@ namespace Longblack.Infrastructure.StockTransfers;
 
 public class StockTransferService(AppDbContext db, IInventoryService inventoryService, IStoreService storeService) : IStockTransferService
 {
-    public async Task<IReadOnlyList<StockTransferDto>> ListAsync(ListStockTransfersFilter filter, CancellationToken ct = default)
+    public async Task<PagedResult<StockTransferDto>> ListAsync(ListStockTransfersFilter filter, PageRequest? page = null, CancellationToken ct = default)
     {
         var query = db.StockTransfers
             .Include(t => t.SourceStore)
@@ -29,8 +30,8 @@ public class StockTransferService(AppDbContext db, IInventoryService inventorySe
         if (filter.DestinationStoreId is not null)
             query = query.Where(t => t.DestinationStoreId == filter.DestinationStoreId);
 
-        var transfers = await query.OrderByDescending(t => t.SequenceNumber).ToListAsync(ct);
-        return transfers.Select(t => ToDto(t, [])).ToList();
+        return await query.OrderByDescending(t => t.SequenceNumber).ThenBy(t => t.Id)
+            .ToPagedResultAsync(page, t => ToDto(t, []), ct);
     }
 
     public async Task<StockTransferDto?> GetByIdAsync(Guid id, CancellationToken ct = default)

@@ -17,11 +17,11 @@ import {
   Typography,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { api } from "../api/client";
 import type { StockTakeDto } from "../api/types";
 import { StockTakeFormDialog } from "../components/stockTake/StockTakeFormDialog";
+import { GridPagination } from "../components/common/GridPagination";
+import { usePagedList } from "../components/common/usePagedList";
 import { useAuth } from "../contexts/AuthContext";
 
 function statusColor(
@@ -36,11 +36,7 @@ function statusColor(
 function useStockTakes(status: string) {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
-  const qs = params.toString();
-  return useQuery<StockTakeDto[]>({
-    queryKey: ["stock-takes", status],
-    queryFn: () => api.get(`/api/stock-takes${qs ? `?${qs}` : ""}`),
-  });
+  return usePagedList<StockTakeDto>("stock-takes", params);
 }
 
 export function StockTakeListPage() {
@@ -54,10 +50,15 @@ export function StockTakeListPage() {
   const [status, setStatus] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
 
-  const { data: stockTakes, isLoading, isError } = useStockTakes(status);
+  const {
+    items: stockTakes,
+    pagination,
+    isLoading,
+    isError,
+  } = useStockTakes(status);
 
   return (
-    <Box>
+    <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
       <Toolbar
         disableGutters
         sx={{ justifyContent: "space-between", gap: 1, mb: 3 }}
@@ -96,20 +97,30 @@ export function StockTakeListPage() {
           </Select>
         </FormControl>
       </Box>
-
-      {isLoading && <CircularProgress />}
-      {isError && (
-        <Typography color="error">Failed to load Stock Takes.</Typography>
+      {(isLoading || isError || stockTakes?.length === 0) && (
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+          }}
+        >
+          {isLoading ? (
+            <CircularProgress />
+          ) : isError ? (
+            <Typography color="error">Failed to load Stock Takes.</Typography>
+          ) : (
+            <Typography color="text.secondary">
+              No Stock Takes match the current filters.
+            </Typography>
+          )}
+        </Box>
       )}
 
-      {!isLoading &&
-        !isError &&
-        stockTakes &&
-        (stockTakes.length === 0 ? (
-          <Typography color="text.secondary">
-            No Stock Takes match the current filters.
-          </Typography>
-        ) : (
+      {!isLoading && !isError && stockTakes && stockTakes.length > 0 && (
+        <>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -155,7 +166,9 @@ export function StockTakeListPage() {
               ))}
             </TableBody>
           </Table>
-        ))}
+          <GridPagination {...pagination} />
+        </>
+      )}
     </Box>
   );
 }

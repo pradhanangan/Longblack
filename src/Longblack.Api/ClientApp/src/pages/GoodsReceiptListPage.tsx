@@ -22,6 +22,8 @@ import { useState } from "react";
 import { api } from "../api/client";
 import type { GoodsReceiptDto, SupplierDto } from "../api/types";
 import { GoodsReceiptFormDialog } from "../components/receiving/GoodsReceiptFormDialog";
+import { GridPagination } from "../components/common/GridPagination";
+import { usePagedList } from "../components/common/usePagedList";
 import { useAuth } from "../contexts/AuthContext";
 
 function statusColor(status: string): "default" | "success" | "error" {
@@ -34,11 +36,7 @@ function useGoodsReceipts(status: string, supplierId: string) {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
   if (supplierId) params.set("supplierId", supplierId);
-  const qs = params.toString();
-  return useQuery<GoodsReceiptDto[]>({
-    queryKey: ["goods-receipts", status, supplierId],
-    queryFn: () => api.get(`/api/goods-receipts${qs ? `?${qs}` : ""}`),
-  });
+  return usePagedList<GoodsReceiptDto>("goods-receipts", params);
 }
 
 function useSuppliers() {
@@ -62,14 +60,15 @@ export function GoodsReceiptListPage() {
   const [createOpen, setCreateOpen] = useState(false);
 
   const {
-    data: receipts,
+    items: receipts,
+    pagination,
     isLoading,
     isError,
   } = useGoodsReceipts(status, supplierId);
   const { data: suppliers } = useSuppliers();
 
   return (
-    <Box>
+    <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
       <Toolbar
         disableGutters
         sx={{ justifyContent: "space-between", gap: 1, mb: 3 }}
@@ -122,19 +121,32 @@ export function GoodsReceiptListPage() {
         </FormControl>
       </Box>
 
-      {isLoading && <CircularProgress />}
-      {isError && (
-        <Typography color="error">Failed to load goods receipts.</Typography>
+      {(isLoading || isError || receipts?.length === 0) && (
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+          }}
+        >
+          {isLoading ? (
+            <CircularProgress />
+          ) : isError ? (
+            <Typography color="error">
+              Failed to load goods receipts.
+            </Typography>
+          ) : (
+            <Typography color="text.secondary">
+              No goods receipts match the current filters.
+            </Typography>
+          )}
+        </Box>
       )}
 
-      {!isLoading &&
-        !isError &&
-        receipts &&
-        (receipts.length === 0 ? (
-          <Typography color="text.secondary">
-            No goods receipts match the current filters.
-          </Typography>
-        ) : (
+      {!isLoading && !isError && receipts && receipts.length > 0 && (
+        <>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -170,8 +182,9 @@ export function GoodsReceiptListPage() {
               ))}
             </TableBody>
           </Table>
-        ))}
+          <GridPagination {...pagination} />
+        </>
+      )}
     </Box>
   );
 }
-

@@ -1,5 +1,6 @@
 using Longblack.Application.Catalogue.Suppliers;
 using Longblack.Application.Common.Exceptions;
+using Longblack.Application.Common.Paging;
 using Longblack.Domain.Catalogue;
 using Longblack.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,7 @@ namespace Longblack.Infrastructure.Catalogue;
 
 public class SupplierService(AppDbContext db) : ISupplierService
 {
-    public async Task<IReadOnlyList<SupplierDto>> ListAsync(string? status = null, CancellationToken ct = default)
+    public async Task<PagedResult<SupplierDto>> ListAsync(string? status = null, PageRequest? page = null, CancellationToken ct = default)
     {
         var query = db.Suppliers.AsQueryable();
 
@@ -19,8 +20,8 @@ public class SupplierService(AppDbContext db) : ISupplierService
 
         return await query
             .OrderBy(s => s.Name)
-            .Select(s => ToDto(s))
-            .ToListAsync(ct);
+            .ThenBy(s => s.Id)
+            .ToPagedResultAsync(page, ToDto, ct);
     }
 
     public async Task<SupplierDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
