@@ -403,3 +403,5 @@ Longblack.Api/appsettings.Development.json
 .env.local
 
 aws-logger-errors.txt
+
+src/Longblack.Api/App_Data/

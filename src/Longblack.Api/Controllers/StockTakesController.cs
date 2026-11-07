@@ -175,5 +175,5 @@ public class StockTakesController(IStockTakeService stockTakeService) : ApiContr
             dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy,
             dto.Items.Select(i => new StockTakeItemResponse(
                 i.Id, i.StockTakeId, i.ProductVariantId, i.Sku, i.Barcode, i.ProductName, i.ColourName, i.SizeName,
-                i.ExpectedQuantity, i.CountedQuantity, i.Variance, i.Status)).ToList());
+                i.ExpectedQuantity, i.CountedQuantity, i.Variance, i.Status, i.ThumbnailUrl)).ToList());
 }

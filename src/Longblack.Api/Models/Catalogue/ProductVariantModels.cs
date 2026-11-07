@@ -27,4 +27,6 @@ public record ProductVariantResponse(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     string CreatedBy,
-    string UpdatedBy);
+    string UpdatedBy,
+    string? ImageUrl = null,
+    string? ThumbnailUrl = null);

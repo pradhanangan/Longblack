@@ -7,6 +7,7 @@ import { api } from '../../api/client'
 import type { StockTakeDto, StockTakeItemDto } from '../../api/types'
 import { useSnackbar } from '../../contexts/SnackbarContext'
 import { ConfirmDialog } from '../products/ConfirmDialog'
+import { ProductThumbnail } from '../products/ProductThumbnail'
 import { CountHistoryDialog } from './CountHistoryDialog'
 
 interface Props {
@@ -52,6 +53,9 @@ export function StockTakeItemRow({ stockTakeId, item, canEdit }: Props) {
 
   return (
     <TableRow sx={{ opacity: item.status === 'Pending' ? 0.7 : 1 }}>
+      <TableCell>
+        <ProductThumbnail url={item.thumbnailUrl} alt={item.productName} />
+      </TableCell>
       <TableCell>{item.sku}</TableCell>
       <TableCell>{item.barcode ?? '—'}</TableCell>
       <TableCell>{item.productName}</TableCell>

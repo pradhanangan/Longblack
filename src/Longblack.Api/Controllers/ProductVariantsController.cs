@@ -97,5 +97,5 @@ public class ProductVariantsController(IProductVariantService variantService) : 
         new(dto.Id, dto.ProductId, dto.Sku, dto.Barcode,
             dto.ColourId, dto.ColourName, dto.SizeId, dto.SizeName,
             dto.SellingPrice, dto.Status,
-            dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy);
+            dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy, dto.ImageUrl, dto.ThumbnailUrl);
 }

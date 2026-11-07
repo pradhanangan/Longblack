@@ -26,7 +26,9 @@ public record ProductResponse(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     string CreatedBy,
-    string UpdatedBy)
+    string UpdatedBy,
+    string? ImageUrl = null,
+    string? ThumbnailUrl = null)
 {
     // Populated only during search (q=) — mirrors ProductDto.Variants.
     public IReadOnlyList<ProductVariantResponse>? Variants { get; init; }

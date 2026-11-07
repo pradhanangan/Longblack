@@ -302,6 +302,7 @@ export function StockTakeDetailPage() {
             <Table size="small">
               <TableHead>
                 <TableRow>
+                  <TableCell sx={{ width: 56 }} />
                   <TableCell>SKU</TableCell>
                   <TableCell>Barcode</TableCell>
                   <TableCell>Product</TableCell>

@@ -20,7 +20,8 @@ public record StockTakeItemResponse(
     int ExpectedQuantity,
     int? CountedQuantity,
     int? Variance,
-    string Status);
+    string Status,
+    string? ThumbnailUrl = null);
 
 public record StockTakeResponse(
     Guid Id,

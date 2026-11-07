@@ -39,4 +39,10 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 COPY --from=webbuild /web/dist ./wwwroot
+# Created root-owned in the image, then handed to the app user so a mounted named volume inherits write access.
+USER root
+RUN mkdir -p /data/product-images && chown $APP_UID /data/product-images
+USER $APP_UID
+ENV ProductImages__RootPath=/data/product-images
+VOLUME /data/product-images
 ENTRYPOINT ["dotnet", "Longblack.Api.dll"]

@@ -14,7 +14,9 @@ public record ProductVariantDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     string CreatedBy,
-    string UpdatedBy);
+    string UpdatedBy,
+    string? ImageUrl = null,
+    string? ThumbnailUrl = null);
 
 public record CreateProductVariantDto(
     string Sku,

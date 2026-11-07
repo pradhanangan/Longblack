@@ -1,3 +1,4 @@
+using Longblack.Application.Catalogue.ProductImages;
 using Longblack.Application.Catalogue.ProductVariants;
 using Longblack.Application.Common.Exceptions;
 using Longblack.Domain.Catalogue;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Longblack.Infrastructure.Catalogue;
 
-public class ProductVariantService(AppDbContext db) : IProductVariantService
+public class ProductVariantService(AppDbContext db, IImageStorage storage) : IProductVariantService
 {
     public async Task<IReadOnlyList<ProductVariantDto>> ListAsync(Guid productId, string? status = null, CancellationToken ct = default)
     {
@@ -20,11 +21,13 @@ public class ProductVariantService(AppDbContext db) : IProductVariantService
         else
             query = query.Where(v => v.Status == ReferenceDataStatus.Active);
 
-        return await query
+        var variants = await query
             .OrderBy(v => v.Size!.SortOrder)
             .ThenBy(v => v.Colour!.Name)
-            .Select(v => ToDto(v))
             .ToListAsync(ct);
+
+        var resolver = await ProductImageResolver.LoadAsync(db, storage, [productId], ct);
+        return variants.Select(v => ToDto(v, resolver)).ToList();
     }
 
     public async Task<ProductVariantDto?> GetByIdAsync(Guid productId, Guid variantId, CancellationToken ct = default)
@@ -34,7 +37,11 @@ public class ProductVariantService(AppDbContext db) : IProductVariantService
             .Include(v => v.Size)
             .FirstOrDefaultAsync(v => v.Id == variantId && v.ProductId == productId, ct);
 
-        return variant is null ? null : ToDto(variant);
+        if (variant is null)
+            return null;
+
+        var resolver = await ProductImageResolver.LoadAsync(db, storage, [productId], ct);
+        return ToDto(variant, resolver);
     }
 
     public async Task<ProductVariantDto> CreateAsync(Guid productId, CreateProductVariantDto dto, string createdBy, CancellationToken ct = default)
@@ -139,12 +146,16 @@ public class ProductVariantService(AppDbContext db) : IProductVariantService
         return await GetByIdAsync(productId, variant.Id, ct) ?? ToDto(variant);
     }
 
-    private static ProductVariantDto ToDto(ProductVariant v) =>
-        new(v.Id, v.ProductId, v.Sku, v.Barcode,
+    private static ProductVariantDto ToDto(ProductVariant v, ProductImageResolver? resolver = null)
+    {
+        var image = resolver?.ForVariant(v.ProductId, v.ColourId);
+        return new(v.Id, v.ProductId, v.Sku, v.Barcode,
             v.ColourId, v.Colour?.Name,
             v.SizeId, v.Size?.Name,
             v.SellingPrice, v.Status,
-            v.CreatedAt, v.UpdatedAt, v.CreatedBy, v.UpdatedBy);
+            v.CreatedAt, v.UpdatedAt, v.CreatedBy, v.UpdatedBy,
+            image?.ImageUrl, image?.ThumbnailUrl);
+    }
 
     public async Task<IReadOnlyList<ProductVariantDto>> CreateBatchAsync(
         Guid productId,
@@ -228,6 +239,7 @@ public class ProductVariantService(AppDbContext db) : IProductVariantService
             .Where(v => ids.Contains(v.Id))
             .ToListAsync(ct);
 
-        return created.Select(ToDto).ToList();
+        var resolver = await ProductImageResolver.LoadAsync(db, storage, [productId], ct);
+        return created.Select(v => ToDto(v, resolver)).ToList();
     }
 }

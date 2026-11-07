@@ -146,60 +146,9 @@ docker compose -f docker-compose.prod.yml down -v
 
 ## Deploy to a production VPS
 
-The pilot deployment uses an Ubuntu VPS, Docker Compose, Caddy for HTTPS, and PostgreSQL on a private container network. See [`docs/deployment-runbook.md`](docs/deployment-runbook.md) for provisioning, DNS, deployment, backups, and update details.
+The pilot deployment uses an Ubuntu VPS, Docker Compose, Caddy for HTTPS, and PostgreSQL. Follow the [deployment runbook](docs/deployment-runbook.md) for the complete, current procedure, including VPS provisioning, DNS, secrets, image transfer, SQL setup, startup, backups, and updates.
 
-At a high level:
-
-1. Provision an Ubuntu VPS, install Docker Compose, configure SSH keys and a firewall, and point a domain's DNS A record at the VPS.
-2. Copy `docker-compose.prod.yml`, `Caddyfile`, `.env`, and the `db/` scripts to the server. Set real production secrets in `.env`.
-3. In `docker-compose.prod.yml`, publish Caddy on host ports `80:80` and `443:443` for the public domain. Keep PostgreSQL bound to `127.0.0.1:45432:5432`; it must not be publicly exposed.
-4. Build the `longblack-prod-api:latest` image locally and transfer it to the VPS:
-
-   ```powershell
-   docker build -f src/Longblack.Api/Dockerfile -t longblack-prod-api:latest .
-   docker save longblack-prod-api:latest | ssh <DEPLOY_USER>@<VPS_IP> "docker load"
-   ```
-
-5. On the VPS, start only the database:
-
-   ```bash
-   docker compose -f docker-compose.prod.yml up -d longblack-prod-db
-   ```
-
-   Apply the hand-written business-schema scripts in order, skipping `002`, `006`, and `007`:
-
-   ```bash
-   for f in 001-catalogue-schema 003-goods-receiving-schema 004-stock-take-schema 005-multi-store-transfers-schema 008-suppliers-schema 010-purchase-orders-schema; do
-     docker exec -i longblack-prod-db psql -v ON_ERROR_STOP=1 -U postgres -d Longblack.Prod < "db/$f.sql"
-   done
-   ```
-
-6. For Identity, generate an idempotent migration SQL script locally, transfer it to the VPS, and apply it inside the database container. From the repository root:
-
-   ```powershell
-   dotnet ef migrations script 0 20260826064245_InitialIdentity `
-     --idempotent `
-     --project .\src\Longblack.Infrastructure\Longblack.Infrastructure.csproj `
-     --startup-project .\src\Longblack.Api\Longblack.Api.csproj `
-     --output .\identity-initial.sql
-   ```
-
-   Transfer and apply it from PowerShell:
-
-   ```powershell
-   scp .\identity-initial.sql <DEPLOY_USER>@<VPS_IP>:~/longblack/identity-initial.sql
-   ssh <DEPLOY_USER>@<VPS_IP> "cd ~/longblack && docker exec -i longblack-prod-db psql -v ON_ERROR_STOP=1 -U postgres -d Longblack.Prod < identity-initial.sql"
-   ```
-
-   The migration predates `AppUser.IsActive`; add that column after applying the migration:
-
-   ```bash
-   docker exec longblack-prod-db psql -v ON_ERROR_STOP=1 -U postgres -d Longblack.Prod -c 'ALTER TABLE users ADD COLUMN IF NOT EXISTS "IsActive" boolean NOT NULL DEFAULT TRUE;'
-   ```
-
-7. Start the Compose stack, verify HTTPS and Admin login, and configure and test backups before inviting users.
-
-The VPS's `DOMAIN` must be the real DNS name, not `localhost`. Caddy obtains a trusted certificate when DNS points to the VPS and ports 80/443 are reachable. Keep `.env` and database backups private.
+Production networking requirements: publish Caddy on host ports `80:80` and `443:443`, and keep PostgreSQL bound to `127.0.0.1:45432:5432` rather than exposing it publicly. Keep the VPS `.env` and database backups private.
 
 ## Database schema policy
 

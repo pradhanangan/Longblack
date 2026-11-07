@@ -16,7 +16,9 @@ public record ProductDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     string CreatedBy,
-    string UpdatedBy)
+    string UpdatedBy,
+    string? ImageUrl = null,
+    string? ThumbnailUrl = null)
 {
     // Populated only during search (q=) so the caller can identify which variant matched.
     public IReadOnlyList<ProductVariantDto>? Variants { get; init; }

@@ -34,6 +34,7 @@ import {
   PAGE_SIZE_OPTIONS,
 } from "../components/common/pagination";
 import { ProductFormDialog } from "../components/products/ProductFormDialog";
+import { ProductThumbnail } from "../components/products/ProductThumbnail";
 import { useAuth } from "../contexts/AuthContext";
 
 function useProducts(
@@ -230,6 +231,7 @@ export function ProductListPage() {
             <Table size="small">
               <TableHead>
                 <TableRow>
+                  <TableCell sx={{ width: 56 }} />
                   <TableCell>Code</TableCell>
                   <TableCell>Name</TableCell>
                   <TableCell>Brand</TableCell>
@@ -245,6 +247,9 @@ export function ProductListPage() {
                     onClick={() => navigate(`/products/${p.id}`)}
                     sx={{ cursor: "pointer" }}
                   >
+                    <TableCell>
+                      <ProductThumbnail url={p.thumbnailUrl} alt={p.name} />
+                    </TableCell>
                     <TableCell>{p.productCode}</TableCell>
                     <TableCell>{p.name}</TableCell>
                     <TableCell>{p.brandName ?? "—"}</TableCell>

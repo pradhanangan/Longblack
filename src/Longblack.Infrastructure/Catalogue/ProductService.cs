@@ -1,3 +1,4 @@
+using Longblack.Application.Catalogue.ProductImages;
 using Longblack.Application.Catalogue.ProductVariants;
 using Longblack.Application.Catalogue.Products;
 using Longblack.Application.Common.Exceptions;
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Longblack.Infrastructure.Catalogue;
 
-public class ProductService(AppDbContext db) : IProductService
+public class ProductService(AppDbContext db, IImageStorage storage) : IProductService
 {
     public async Task<PagedResult<ProductDto>> ListAsync(ListProductsFilter filter, CancellationToken ct = default)
     {
@@ -54,8 +55,10 @@ public class ProductService(AppDbContext db) : IProductService
             .Take(filter.Page.PageSize)
             .ToListAsync(ct);
 
+        var resolver = await ProductImageResolver.LoadAsync(db, storage, products.Select(p => p.Id), ct);
+
         return new PagedResult<ProductDto>(
-            products.Select(p => ToDtoWithVariants(p, filter.SearchQuery)).ToList(),
+            products.Select(p => ToDtoWithVariants(p, filter.SearchQuery, resolver)).ToList(),
             total,
             filter.Page.Page,
             filter.Page.PageSize);
@@ -68,7 +71,11 @@ public class ProductService(AppDbContext db) : IProductService
             .Include(p => p.Category).ThenInclude(c => c!.ParentCategory)
             .FirstOrDefaultAsync(p => p.Id == id, ct);
 
-        return product is null ? null : ToDto(product);
+        if (product is null)
+            return null;
+
+        var resolver = await ProductImageResolver.LoadAsync(db, storage, [id], ct);
+        return ToDto(product, resolver);
     }
 
     public async Task<ProductDto> CreateAsync(CreateProductDto dto, string createdBy, CancellationToken ct = default)
@@ -177,22 +184,31 @@ public class ProductService(AppDbContext db) : IProductService
         return $"{brand.Code}-{category.Code}-{sequence}";
     }
 
-    private static ProductDto ToDtoWithVariants(Product p, string? searchQuery) =>
-        ToDto(p) with
+    private static ProductDto ToDtoWithVariants(Product p, string? searchQuery, ProductImageResolver resolver) =>
+        ToDto(p, resolver) with
         {
             Variants = string.IsNullOrWhiteSpace(searchQuery)
                 ? null
-                : p.Variants.Select(v => new ProductVariantDto(
-                    v.Id, v.ProductId, v.Sku, v.Barcode,
-                    v.ColourId, v.Colour?.Name,
-                    v.SizeId, v.Size?.Name,
-                    v.SellingPrice, v.Status,
-                    v.CreatedAt, v.UpdatedAt, v.CreatedBy, v.UpdatedBy)).ToList()
+                : p.Variants.Select(v =>
+                {
+                    var image = resolver.ForVariant(v.ProductId, v.ColourId);
+                    return new ProductVariantDto(
+                        v.Id, v.ProductId, v.Sku, v.Barcode,
+                        v.ColourId, v.Colour?.Name,
+                        v.SizeId, v.Size?.Name,
+                        v.SellingPrice, v.Status,
+                        v.CreatedAt, v.UpdatedAt, v.CreatedBy, v.UpdatedBy,
+                        image?.ImageUrl, image?.ThumbnailUrl);
+                }).ToList()
         };
 
-    private static ProductDto ToDto(Product p) =>
-        new(p.Id, p.ProductCode, p.Name, p.Description,
+    private static ProductDto ToDto(Product p, ProductImageResolver? resolver = null)
+    {
+        var image = resolver?.ForProduct(p.Id);
+        return new(p.Id, p.ProductCode, p.Name, p.Description,
             p.BrandId, p.Brand?.Name,
             p.CategoryId, p.Category?.DisplayName,
-            p.Status, p.CreatedAt, p.UpdatedAt, p.CreatedBy, p.UpdatedBy);
+            p.Status, p.CreatedAt, p.UpdatedAt, p.CreatedBy, p.UpdatedBy,
+            image?.ImageUrl, image?.ThumbnailUrl);
+    }
 }

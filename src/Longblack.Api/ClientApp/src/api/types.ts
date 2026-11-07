@@ -43,6 +43,17 @@ export interface ProductVariantDto {
   updatedAt: string
   createdBy: string
   updatedBy: string
+  imageUrl?: string | null
+  thumbnailUrl?: string | null
+}
+
+export interface ProductImageDto {
+  id: string
+  productId: string
+  colourId: string | null
+  imageUrl: string
+  thumbnailUrl: string
+  updatedAt: string
 }
 
 export interface ProductDto {
@@ -59,6 +70,8 @@ export interface ProductDto {
   updatedAt: string
   createdBy: string
   updatedBy: string
+  imageUrl?: string | null
+  thumbnailUrl?: string | null
   variants?: ProductVariantDto[]
 }
 
@@ -213,6 +226,7 @@ export interface StockTakeItemDto {
   countedQuantity: number | null
   variance: number | null
   status: string
+  thumbnailUrl?: string | null
 }
 
 export interface StockTakeDto {

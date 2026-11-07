@@ -20,6 +20,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Colour> Colours => Set<Colour>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
     public DbSet<Size> Sizes => Set<Size>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<GoodsReceipt> GoodsReceipts => Set<GoodsReceipt>();
@@ -189,6 +190,25 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(v => v.UpdatedBy).HasColumnName("updated_by").IsRequired();
             e.HasOne(v => v.Colour).WithMany().HasForeignKey(v => v.ColourId);
             e.HasOne(v => v.Size).WithMany().HasForeignKey(v => v.SizeId);
+        });
+
+        // ProductImage — at most one Product Image (null colour_id) and one Colour Image per colour per product.
+        builder.Entity<ProductImage>(e =>
+        {
+            e.ToTable("product_images");
+            e.HasKey(i => i.Id);
+            e.Property(i => i.Id).HasColumnName("id");
+            e.Property(i => i.ProductId).HasColumnName("product_id");
+            e.Property(i => i.ColourId).HasColumnName("colour_id");
+            e.Property(i => i.FileName).HasColumnName("file_name").IsRequired();
+            e.Property(i => i.ThumbnailFileName).HasColumnName("thumbnail_file_name").IsRequired();
+            e.Property(i => i.CreatedAt).HasColumnName("created_at");
+            e.Property(i => i.UpdatedAt).HasColumnName("updated_at");
+            e.Property(i => i.CreatedBy).HasColumnName("created_by").IsRequired();
+            e.Property(i => i.UpdatedBy).HasColumnName("updated_by").IsRequired();
+            e.HasIndex(i => new { i.ProductId, i.ColourId }).IsUnique().AreNullsDistinct(false);
+            e.HasOne(i => i.Product).WithMany().HasForeignKey(i => i.ProductId);
+            e.HasOne(i => i.Colour).WithMany().HasForeignKey(i => i.ColourId).IsRequired(false);
         });
 
         // Backs GoodsReceipt.SequenceNumber so receipt numbers (GR-0001) are assigned atomically by Postgres.

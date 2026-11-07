@@ -68,6 +68,22 @@ _Avoid_: Retail price, RRP
 How a Sale was paid (a payment type and amount). Recorded for reference only; no payment processing.
 _Avoid_: Tender
 
+## Product Images
+
+Photos that let staff recognise an item by sight.
+
+**Product Image**:
+The single primary photo of a Product, shown whenever a variant has no Colour Image. Uploaded or replaced by Manager or Admin only.
+_Avoid_: Product photo, picture, thumbnail (a thumbnail is a derived small copy, not a separate image)
+
+**Colour Image**:
+The photo of one Product in one Colour, shared by every Size of that Product and Colour. At most one per Product and Colour. Uploaded or replaced by Manager or Admin only.
+_Avoid_: Variant image, variant photo
+
+**Resolved Image**:
+The image shown for a Product Variant: its Colour Image if present, otherwise the Product Image, otherwise a placeholder. Shown on product lists and Stock Take Items.
+_Avoid_: Display image
+
 ## Dashboard
 
 A read-only landing page summarising stock and outstanding work. Same content for every role.

@@ -5,8 +5,8 @@ services:
     image: caddy:2
     restart: unless-stopped
     ports:
-      - "8080:80"
-      - "8443:443"
+      - "80:80"
+      - "443:443"
     environment:
       DOMAIN: ${DOMAIN:-localhost}
     volumes:
@@ -29,6 +29,8 @@ services:
       JwtSettings__Key: ${JWT_KEY}
       Seed__AdminEmail: ${ADMIN_EMAIL:-admin@longblack.com}
       Seed__AdminPassword: ${ADMIN_PASSWORD}
+    volumes:
+      - longblack-prod-images:/data/product-images
     depends_on:
       - longblack-prod-db
 
@@ -49,3 +51,4 @@ volumes:
   caddy-prod-data:
   caddy-prod-config:
   longblack-prod-pgdata:
+  longblack-prod-images:

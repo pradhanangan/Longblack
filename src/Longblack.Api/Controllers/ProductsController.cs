@@ -1,13 +1,15 @@
+using Longblack.Application.Catalogue.ProductImages;
 using Longblack.Application.Catalogue.Products;
 using Longblack.Application.Common.Paging;
 using Longblack.Api.Models.Catalogue;
+using Longblack.Infrastructure.Catalogue;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Longblack.Api.Controllers;
 
 [Authorize]
-public class ProductsController(IProductService productService) : ApiControllerBase
+public class ProductsController(IProductService productService, IProductImageService imageService) : ApiControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> List(
@@ -91,14 +93,68 @@ public class ProductsController(IProductService productService) : ApiControllerB
         }
     }
 
+    [HttpGet("{id:guid}/images")]
+    public async Task<IActionResult> ListImages(Guid id, CancellationToken ct) =>
+        Ok(await imageService.ListAsync(id, ct));
+
+    [HttpPut("{id:guid}/image")]
+    [Authorize(Roles = "Manager,Admin")]
+    [RequestSizeLimit(ProductImageService.MaxUploadBytes + 1024 * 1024)]
+    public Task<IActionResult> SetImage(Guid id, IFormFile file, CancellationToken ct) =>
+        SetImageCore(id, null, file, ct);
+
+    [HttpPut("{id:guid}/colours/{colourId:guid}/image")]
+    [Authorize(Roles = "Manager,Admin")]
+    [RequestSizeLimit(ProductImageService.MaxUploadBytes + 1024 * 1024)]
+    public Task<IActionResult> SetColourImage(Guid id, Guid colourId, IFormFile file, CancellationToken ct) =>
+        SetImageCore(id, colourId, file, ct);
+
+    [HttpDelete("{id:guid}/image")]
+    [Authorize(Roles = "Manager,Admin")]
+    public Task<IActionResult> DeleteImage(Guid id, CancellationToken ct) =>
+        DeleteImageCore(id, null, ct);
+
+    [HttpDelete("{id:guid}/colours/{colourId:guid}/image")]
+    [Authorize(Roles = "Manager,Admin")]
+    public Task<IActionResult> DeleteColourImage(Guid id, Guid colourId, CancellationToken ct) =>
+        DeleteImageCore(id, colourId, ct);
+
+    private async Task<IActionResult> SetImageCore(Guid id, Guid? colourId, IFormFile file, CancellationToken ct)
+    {
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            return Ok(await imageService.SetAsync(id, colourId, stream, CurrentUser, ct));
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    private async Task<IActionResult> DeleteImageCore(Guid id, Guid? colourId, CancellationToken ct)
+    {
+        try
+        {
+            await imageService.DeleteAsync(id, colourId, ct);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
     private static ProductResponse ToResponse(ProductDto dto) =>
         new(dto.Id, dto.ProductCode, dto.Name, dto.Description,
             dto.BrandId, dto.BrandName, dto.CategoryId, dto.CategoryName,
-            dto.Status, dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy)
+            dto.Status, dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy,
+            dto.ImageUrl, dto.ThumbnailUrl)
         {
             Variants = dto.Variants?.Select(v => new ProductVariantResponse(
                 v.Id, v.ProductId, v.Sku, v.Barcode,
                 v.ColourId, v.ColourName, v.SizeId, v.SizeName,
-                v.SellingPrice, v.Status, v.CreatedAt, v.UpdatedAt, v.CreatedBy, v.UpdatedBy)).ToList()
+                v.SellingPrice, v.Status, v.CreatedAt, v.UpdatedAt, v.CreatedBy, v.UpdatedBy,
+                v.ImageUrl, v.ThumbnailUrl)).ToList()
         };
 }

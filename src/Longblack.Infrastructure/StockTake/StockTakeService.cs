@@ -1,3 +1,4 @@
+using Longblack.Application.Catalogue.ProductImages;
 using Longblack.Application.Common.Exceptions;
 using Longblack.Application.Common.Paging;
 using Longblack.Application.Inventory;
@@ -5,6 +6,7 @@ using Longblack.Application.StockTake;
 using Longblack.Domain.Catalogue;
 using Longblack.Domain.Inventory;
 using Longblack.Domain.Stores;
+using Longblack.Infrastructure.Catalogue;
 using Longblack.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using StockTakeEntity = Longblack.Domain.StockTake.StockTake;
@@ -12,7 +14,7 @@ using StockTakeItemEntity = Longblack.Domain.StockTake.StockTakeItem;
 
 namespace Longblack.Infrastructure.StockTake;
 
-public class StockTakeService(AppDbContext db, IInventoryService inventoryService) : IStockTakeService
+public class StockTakeService(AppDbContext db, IInventoryService inventoryService, IImageStorage imageStorage) : IStockTakeService
 {
     public async Task<PagedResult<StockTakeDto>> ListAsync(ListStockTakesFilter filter, PageRequest? page = null, CancellationToken ct = default)
     {
@@ -32,7 +34,17 @@ public class StockTakeService(AppDbContext db, IInventoryService inventoryServic
     public async Task<StockTakeDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         var stockTake = await LoadAsync(id, ct);
-        return stockTake is null ? null : ToDto(stockTake, stockTake.Items);
+        if (stockTake is null)
+            return null;
+
+        var resolver = await ProductImageResolver.LoadAsync(
+            db, imageStorage, stockTake.Items.Select(i => i.ProductVariant!.ProductId), ct);
+        var dto = ToDto(stockTake, stockTake.Items);
+        var thumbnails = stockTake.Items.ToDictionary(
+            i => i.Id,
+            i => resolver.ForVariant(i.ProductVariant!.ProductId, i.ProductVariant.ColourId)?.ThumbnailUrl);
+
+        return dto with { Items = dto.Items.Select(i => i with { ThumbnailUrl = thumbnails.GetValueOrDefault(i.Id) }).ToList() };
     }
 
     public async Task<StockTakeDto> CreateAsync(CreateStockTakeDto dto, string createdBy, CancellationToken ct = default)

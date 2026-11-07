@@ -24,6 +24,8 @@ import type {
 } from "../api/types";
 import { ConfirmDialog } from "../components/products/ConfirmDialog";
 import { ProductFormDialog } from "../components/products/ProductFormDialog";
+import { ProductImagesSection } from "../components/products/ProductImagesSection";
+import { ProductThumbnail } from "../components/products/ProductThumbnail";
 import { VariantFormDialog } from "../components/products/VariantFormDialog";
 import { VariantMatrixDialog } from "../components/products/VariantMatrixDialog";
 import { useAuth } from "../contexts/AuthContext";
@@ -191,6 +193,13 @@ export function ProductDetailPage() {
 
       <Divider sx={{ my: 3 }} />
 
+      <Typography variant="h6" sx={{ mb: 2 }}>
+        Images
+      </Typography>
+      <ProductImagesSection productId={id!} variants={variants} canWrite={canWrite} />
+
+      <Divider sx={{ my: 3 }} />
+
       {/* Variants section */}
       <Box
         sx={{
@@ -235,6 +244,7 @@ export function ProductDetailPage() {
           <Table size="small">
             <TableHead>
               <TableRow>
+                <TableCell sx={{ width: 56 }} />
                 <TableCell>SKU</TableCell>
                 <TableCell>Barcode</TableCell>
                 <TableCell>Colour</TableCell>
@@ -250,6 +260,9 @@ export function ProductDetailPage() {
                   key={v.id}
                   sx={{ opacity: v.status === "Inactive" ? 0.5 : 1 }}
                 >
+                  <TableCell>
+                    <ProductThumbnail url={v.thumbnailUrl} alt={v.sku} />
+                  </TableCell>
                   <TableCell>{v.sku}</TableCell>
                   <TableCell>{v.barcode ?? "—"}</TableCell>
                   <TableCell>{v.colourName ?? "—"}</TableCell>

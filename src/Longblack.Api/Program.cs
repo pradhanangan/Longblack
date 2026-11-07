@@ -1,9 +1,11 @@
 using System.Text;
+using Longblack.Infrastructure.Catalogue;
 using Longblack.Infrastructure.DependencyInjection;
 using Longblack.Infrastructure.Seeding;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
@@ -78,6 +80,18 @@ if (serveSpa)
     app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = spaFiles });
     app.UseStaticFiles(new StaticFileOptions { FileProvider = spaFiles });
 }
+
+// Product images live outside wwwroot (on a mounted volume in production). File names are GUIDs
+// and replaced images get new names, so responses can be cached indefinitely.
+var imageRoot = Directory.CreateDirectory(
+    app.Services.GetRequiredService<IOptions<ProductImageOptions>>().Value.FullRootPath).FullName;
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(imageRoot),
+    RequestPath = ProductImageOptions.RequestPath,
+    OnPrepareResponse = ctx =>
+        ctx.Context.Response.Headers.CacheControl = "public,max-age=31536000,immutable"
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

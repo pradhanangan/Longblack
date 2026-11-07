@@ -1,6 +1,7 @@
 using Longblack.Application.Catalogue.Brands;
 using Longblack.Application.Catalogue.Categories;
 using Longblack.Application.Catalogue.Colours;
+using Longblack.Application.Catalogue.ProductImages;
 using Longblack.Application.Catalogue.Products;
 using Longblack.Application.Catalogue.ProductVariants;
 using Longblack.Application.Catalogue.Sizes;
@@ -58,6 +59,9 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IColourService, ColourService>();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IProductVariantService, ProductVariantService>();
+        services.Configure<ProductImageOptions>(configuration.GetSection(ProductImageOptions.SectionName));
+        services.AddSingleton<IImageStorage, LocalImageStorage>();
+        services.AddScoped<IProductImageService, ProductImageService>();
         services.AddScoped<ISizeService, SizeService>();
         services.AddScoped<ISupplierService, SupplierService>();
         services.AddScoped<IInventoryService, InventoryService>();
