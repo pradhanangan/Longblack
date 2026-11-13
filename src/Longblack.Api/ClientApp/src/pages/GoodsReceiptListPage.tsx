@@ -1,4 +1,5 @@
 import AddIcon from "@mui/icons-material/Add";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 import {
   Box,
   Button,
@@ -22,6 +23,7 @@ import { useState } from "react";
 import { api } from "../api/client";
 import type { GoodsReceiptDto, SupplierDto } from "../api/types";
 import { GoodsReceiptFormDialog } from "../components/receiving/GoodsReceiptFormDialog";
+import { GoodsReceiptUploadDialog } from "../components/receiving/GoodsReceiptUploadDialog";
 import { GridPagination } from "../components/common/GridPagination";
 import { usePagedList } from "../components/common/usePagedList";
 import { useAuth } from "../contexts/AuthContext";
@@ -58,6 +60,7 @@ export function GoodsReceiptListPage() {
   const [status, setStatus] = useState("");
   const [supplierId, setSupplierId] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const {
     items: receipts,
@@ -75,19 +78,32 @@ export function GoodsReceiptListPage() {
       >
         <Typography variant="h5">Goods Receipts</Typography>
         {canCreate && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setCreateOpen(true)}
-          >
-            New Receipt
-          </Button>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button
+              variant="outlined"
+              startIcon={<UploadFileIcon />}
+              onClick={() => setUploadOpen(true)}
+            >
+              Upload CSV
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setCreateOpen(true)}
+            >
+              New Receipt
+            </Button>
+          </Box>
         )}
       </Toolbar>
 
       <GoodsReceiptFormDialog
         open={createOpen}
         onClose={() => setCreateOpen(false)}
+      />
+      <GoodsReceiptUploadDialog
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
       />
 
       <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>

@@ -81,7 +81,7 @@ export function CompleteSaleDialog({ open, onClose, sale }: Props) {
           type="number"
           value={paymentAmount}
           onChange={(e) => setPaymentAmount(e.target.value)}
-          helperText={`Sale total: $${sale.total.toFixed(2)} (GST inclusive)`}
+          helperText={`Sale total: $${sale.total.toFixed(2)} (GST inclusive, GST $${sale.gstAmount.toFixed(2)})`}
           slotProps={{ input: { inputProps: { min: 0, step: '0.01' } } }}
         />
       </DialogContent>

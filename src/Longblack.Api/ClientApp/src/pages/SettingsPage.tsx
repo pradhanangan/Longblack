@@ -292,6 +292,56 @@ function UsersTab() {
   );
 }
 
+function GstTab() {
+  const qc = useQueryClient();
+  const { showSuccess, showError } = useSnackbar();
+  const [percent, setPercent] = useState<string | null>(null);
+
+  const { data } = useQuery<{ gstRate: number }>({
+    queryKey: ["settings"],
+    queryFn: () => api.get("/api/settings"),
+  });
+
+  const shown = percent ?? (data ? String(parseFloat((data.gstRate * 100).toFixed(2))) : "");
+
+  const save = useMutation({
+    mutationFn: () =>
+      api.put("/api/settings/gst-rate", { gstRate: Number(shown) / 100 }),
+    onSuccess: () => {
+      showSuccess("GST rate updated.");
+      setPercent(null);
+      qc.invalidateQueries({ queryKey: ["settings"] });
+      qc.invalidateQueries({ queryKey: ["sales"] });
+    },
+    onError: (e: Error) => showError(e.message),
+  });
+
+  const invalid = shown === "" || Number(shown) < 0 || Number(shown) > 100;
+
+  return (
+    <Box sx={{ maxWidth: 400, display: "flex", flexDirection: "column", gap: 2 }}>
+      <Typography color="text.secondary">
+        Selling Prices include GST. This rate is used to work out the GST in each Sale
+        when it is completed. Completed Sales keep the rate they were made with.
+      </Typography>
+      <TextField
+        label="GST rate (%)"
+        type="number"
+        value={shown}
+        onChange={(e) => setPercent(e.target.value)}
+        slotProps={{ htmlInput: { min: 0, max: 100, step: 0.01 } }}
+      />
+      <Button
+        variant="contained"
+        disabled={invalid || percent === null || save.isPending}
+        onClick={() => save.mutate()}
+      >
+        Save
+      </Button>
+    </Box>
+  );
+}
+
 export function SettingsPage() {
   const { user } = useAuth();
   const isAdmin = user?.roles.includes("Admin") ?? false;
@@ -305,9 +355,11 @@ export function SettingsPage() {
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
         <Tab label="My account" />
         {isAdmin && <Tab label="Users" />}
+        {isAdmin && <Tab label="GST" />}
       </Tabs>
       {tab === 0 && <MyAccountTab />}
       {tab === 1 && isAdmin && <UsersTab />}
+      {tab === 2 && isAdmin && <GstTab />}
     </Box>
   );
 }

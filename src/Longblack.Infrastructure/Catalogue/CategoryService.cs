@@ -12,10 +12,8 @@ public class CategoryService(AppDbContext db) : ICategoryService
     {
         var query = db.Categories.AsQueryable();
 
-        if (status is not null)
-            query = query.Where(c => c.Status == status);
-        else
-            query = query.Where(c => c.Status == ReferenceDataStatus.Active);
+        if (!string.Equals(status, ReferenceDataStatus.All, StringComparison.OrdinalIgnoreCase))
+            query = query.Where(c => c.Status == (status ?? ReferenceDataStatus.Active));
 
         return await query
             .OrderBy(c => c.Name)
@@ -31,14 +29,9 @@ public class CategoryService(AppDbContext db) : ICategoryService
 
     public async Task<CategoryDto> CreateAsync(CreateCategoryDto dto, string createdBy, CancellationToken ct = default)
     {
-        if (dto.ParentCategoryId is not null)
-        {
-            var parentExists = await db.Categories.AnyAsync(c => c.Id == dto.ParentCategoryId, ct);
-            if (!parentExists)
-                throw new InvalidReferenceException(nameof(Category), "parentCategoryId", dto.ParentCategoryId);
-        }
+        await ValidateParentAsync(null, dto.ParentCategoryId, ct);
 
-        var duplicate = await db.Categories.AnyAsync(c => c.Name == dto.Name, ct);
+        var duplicate = await db.Categories.AnyAsync(c => c.Name == dto.Name && c.ParentCategoryId == dto.ParentCategoryId, ct);
         if (duplicate)
             throw new DuplicateException(nameof(Category), "name", dto.Name);
 
@@ -70,23 +63,17 @@ public class CategoryService(AppDbContext db) : ICategoryService
         var category = await db.Categories.FindAsync([id], ct)
             ?? throw new NotFoundException(nameof(Category), id);
 
-        if (dto.ParentCategoryId is not null && dto.ParentCategoryId != category.ParentCategoryId)
-        {
-            var parentExists = await db.Categories.AnyAsync(c => c.Id == dto.ParentCategoryId, ct);
-            if (!parentExists)
-                throw new InvalidReferenceException(nameof(Category), "parentCategoryId", dto.ParentCategoryId);
-        }
+        if (dto.Code != category.Code)
+            throw new InvalidStateException("A category's code cannot be changed once created.");
 
-        var duplicate = await db.Categories.AnyAsync(c => c.Name == dto.Name && c.Id != id, ct);
+        await ValidateParentAsync(id, dto.ParentCategoryId, ct);
+
+        var duplicate = await db.Categories.AnyAsync(
+            c => c.Name == dto.Name && c.ParentCategoryId == dto.ParentCategoryId && c.Id != id, ct);
         if (duplicate)
             throw new DuplicateException(nameof(Category), "name", dto.Name);
 
-        var codeDuplicate = await db.Categories.AnyAsync(c => c.Code == dto.Code && c.Id != id, ct);
-        if (codeDuplicate)
-            throw new DuplicateException(nameof(Category), "code", dto.Code);
-
         category.Name = dto.Name;
-        category.Code = dto.Code;
         category.ParentCategoryId = dto.ParentCategoryId;
         category.UpdatedAt = DateTimeOffset.UtcNow;
         category.UpdatedBy = updatedBy;
@@ -106,6 +93,24 @@ public class CategoryService(AppDbContext db) : ICategoryService
 
         await db.SaveChangesAsync(ct);
         return ToDto(category);
+    }
+
+    // Categories are at most two levels: a root, or a child of a root.
+    private async Task ValidateParentAsync(Guid? categoryId, Guid? parentId, CancellationToken ct)
+    {
+        if (parentId is null) return;
+
+        if (parentId == categoryId)
+            throw new InvalidStateException("A category cannot be its own parent.");
+
+        var parent = await db.Categories.AsNoTracking().FirstOrDefaultAsync(c => c.Id == parentId, ct)
+            ?? throw new InvalidReferenceException(nameof(Category), "parentCategoryId", parentId);
+
+        if (parent.ParentCategoryId is not null)
+            throw new InvalidStateException("A category can only be placed under a top-level category.");
+
+        if (categoryId is not null && await db.Categories.AnyAsync(c => c.ParentCategoryId == categoryId, ct))
+            throw new InvalidStateException("A category that has sub-categories cannot itself become a sub-category.");
     }
 
     private static CategoryDto ToDto(Category c) =>

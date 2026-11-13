@@ -5,6 +5,7 @@ using Longblack.Domain.Purchasing;
 using Longblack.Domain.Receiving;
 using Longblack.Domain.StockTransfers;
 using Longblack.Domain.Sales;
+using Longblack.Domain.Settings;
 using Longblack.Domain.Stores;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<StockTransferLine> StockTransferLines => Set<StockTransferLine>();
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleLine> SaleLines => Set<SaleLine>();
+    public DbSet<AppSettings> AppSettings => Set<AppSettings>();
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
     public DbSet<PurchaseOrderLine> PurchaseOrderLines => Set<PurchaseOrderLine>();
     public DbSet<PurchaseOrderSend> PurchaseOrderSends => Set<PurchaseOrderSend>();
@@ -411,6 +413,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         // Backs Sale.SequenceNumber so sale numbers (SL-0001) are assigned atomically by Postgres.
         builder.HasSequence<int>("sale_seq").StartsAt(1);
 
+        builder.Entity<AppSettings>(e =>
+        {
+            e.ToTable("app_settings");
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Id).HasColumnName("id").ValueGeneratedNever();
+            e.Property(s => s.GstRate).HasColumnName("gst_rate").HasPrecision(5, 4);
+            e.Property(s => s.UpdatedAt).HasColumnName("updated_at");
+            e.Property(s => s.UpdatedBy).HasColumnName("updated_by").IsRequired();
+        });
+
         builder.Entity<Sale>(e =>
         {
             e.ToTable("sales");
@@ -425,6 +437,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(s => s.Status).HasColumnName("status").IsRequired();
             e.Property(s => s.PaymentType).HasColumnName("payment_type");
             e.Property(s => s.PaymentAmount).HasColumnName("payment_amount").HasPrecision(10, 2);
+            e.Property(s => s.GstRate).HasColumnName("gst_rate").HasPrecision(5, 4);
             e.Property(s => s.CompletedDate).HasColumnName("completed_date");
             e.Property(s => s.CompletedBy).HasColumnName("completed_by");
             e.Property(s => s.VoidedDate).HasColumnName("voided_date");
@@ -448,6 +461,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(l => l.Quantity).HasColumnName("quantity").IsRequired();
             e.Property(l => l.UnitPrice).HasColumnName("unit_price").HasPrecision(10, 2);
             e.Property(l => l.Discount).HasColumnName("discount").HasPrecision(10, 2);
+            e.Property(l => l.GstAmount).HasColumnName("gst_amount").HasPrecision(10, 2);
             e.Property(l => l.CreatedAt).HasColumnName("created_at");
             e.Property(l => l.UpdatedAt).HasColumnName("updated_at");
             e.Property(l => l.CreatedBy).HasColumnName("created_by").IsRequired();

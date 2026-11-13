@@ -12,6 +12,7 @@ using Longblack.Application.Receiving.GoodsReceipts;
 using Longblack.Application.Purchasing;
 using Longblack.Application.StockTake;
 using Longblack.Application.Sales;
+using Longblack.Application.Settings;
 using Longblack.Application.StockTransfers;
 using Longblack.Application.Stores;
 using Longblack.Domain.Identity;
@@ -23,6 +24,7 @@ using Longblack.Infrastructure.Purchasing;
 using Longblack.Infrastructure.Receiving;
 using Longblack.Infrastructure.StockTake;
 using Longblack.Infrastructure.Sales;
+using Longblack.Infrastructure.Settings;
 using Longblack.Infrastructure.StockTransfers;
 using Longblack.Infrastructure.Stores;
 using Microsoft.AspNetCore.Identity;
@@ -71,6 +73,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IStoreService, StoreService>();
         services.AddScoped<IStockTransferService, StockTransferService>();
         services.AddScoped<ISaleService, SaleService>();
+        services.AddScoped<IAppSettingsService, AppSettingsService>();
 
         services.Configure<CompanyOptions>(configuration.GetSection(CompanyOptions.SectionName));
         services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));

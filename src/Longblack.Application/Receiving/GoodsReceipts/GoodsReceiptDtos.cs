@@ -37,6 +37,11 @@ public record CreateGoodsReceiptDto(
     DateTimeOffset? ReceivedDate,
     Guid? PurchaseOrderId = null);
 
+public record UploadGoodsReceiptDto(
+    Guid SupplierId,
+    DateTimeOffset? ReceivedDate,
+    Guid? PurchaseOrderId = null);
+
 // Header fields are only editable while the receipt is Draft.
 public record UpdateGoodsReceiptDto(
     Guid SupplierId,

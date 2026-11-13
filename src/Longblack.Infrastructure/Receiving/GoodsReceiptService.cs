@@ -112,6 +112,70 @@ public class GoodsReceiptService(
         return await GetByIdAsync(created.Id, ct) ?? created;
     }
 
+    public async Task<GoodsReceiptDto> CreateFromCsvAsync(UploadGoodsReceiptDto dto, Stream csv, string createdBy, CancellationToken ct = default)
+    {
+        var rows = GoodsReceiptCsvParser.Parse(csv);
+
+        var skus = rows.Where(r => r.Sku is not null).Select(r => r.Sku!.ToLower()).Distinct().ToList();
+        var barcodes = rows.Where(r => r.Barcode is not null).Select(r => r.Barcode!).Distinct().ToList();
+        var variants = await db.ProductVariants.AsNoTracking()
+            .Where(v => skus.Contains(v.Sku.ToLower()) || (v.Barcode != null && barcodes.Contains(v.Barcode)))
+            .ToListAsync(ct);
+        var bySku = variants.ToDictionary(v => v.Sku.ToLowerInvariant());
+        var byBarcode = variants.Where(v => v.Barcode != null).GroupBy(v => v.Barcode!).ToDictionary(g => g.Key, g => g.First());
+
+        IReadOnlyDictionary<Guid, PurchaseOrderLineBalance>? orderedVariants = null;
+        if (dto.PurchaseOrderId is { } purchaseOrderId)
+            orderedVariants = await purchaseOrderService.GetLineBalancesAsync(purchaseOrderId, null, ct);
+
+        var errors = new List<UploadRowError>();
+        var resolved = new List<(GoodsReceiptCsvRow Row, ProductVariant Variant)>();
+        foreach (var row in rows)
+        {
+            var variant = row.Sku is not null && bySku.TryGetValue(row.Sku.ToLowerInvariant(), out var s) ? s
+                : row.Barcode is not null && byBarcode.TryGetValue(row.Barcode, out var b) ? b
+                : null;
+            var label = row.Sku ?? row.Barcode;
+
+            if (variant is null)
+                errors.Add(new UploadRowError(row.Row, $"No product variant found for '{label}'."));
+            else if (variant.Status != ReferenceDataStatus.Active)
+                errors.Add(new UploadRowError(row.Row, $"Product variant '{variant.Sku}' is inactive."));
+            else if (orderedVariants is not null && !orderedVariants.ContainsKey(variant.Id))
+                errors.Add(new UploadRowError(row.Row, $"Product variant '{variant.Sku}' is not on the purchase order."));
+            else
+                resolved.Add((row, variant));
+        }
+
+        if (errors.Count > 0)
+            throw new UploadValidationException(errors);
+
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+
+        var created = await CreateAsync(new CreateGoodsReceiptDto(dto.SupplierId, dto.ReceivedDate, dto.PurchaseOrderId), createdBy, ct);
+
+        var now = DateTimeOffset.UtcNow;
+        foreach (var (row, variant) in resolved)
+        {
+            db.GoodsReceiptLines.Add(new GoodsReceiptLine
+            {
+                Id = Guid.NewGuid(),
+                GoodsReceiptId = created.Id,
+                ProductVariantId = variant.Id,
+                Quantity = row.Quantity,
+                UnitCost = row.UnitCost,
+                CreatedAt = now,
+                UpdatedAt = now,
+                CreatedBy = createdBy,
+                UpdatedBy = createdBy
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
+        return await GetByIdAsync(created.Id, ct) ?? created;
+    }
+
     public async Task<GoodsReceiptDto> UpdateAsync(Guid id, UpdateGoodsReceiptDto dto, string updatedBy, CancellationToken ct = default)
     {
         var receipt = await RequireAsync(id, ct);

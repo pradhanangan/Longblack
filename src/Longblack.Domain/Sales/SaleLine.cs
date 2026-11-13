@@ -20,6 +20,9 @@ public class SaleLine
     // Manual discount for the whole line (not per unit); never exceeds Quantity * UnitPrice.
     public decimal Discount { get; set; }
 
+    // GST included in the discounted line total, snapshotted on completion; null while the Sale is Draft.
+    public decimal? GstAmount { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public string CreatedBy { get; set; } = string.Empty;

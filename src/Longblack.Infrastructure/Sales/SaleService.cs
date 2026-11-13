@@ -2,6 +2,7 @@ using Longblack.Application.Common.Exceptions;
 using Longblack.Application.Common.Paging;
 using Longblack.Application.Inventory;
 using Longblack.Application.Sales;
+using Longblack.Application.Settings;
 using Longblack.Domain.Catalogue;
 using Longblack.Domain.Inventory;
 using Longblack.Domain.Sales;
@@ -11,10 +12,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Longblack.Infrastructure.Sales;
 
-public class SaleService(AppDbContext db, IInventoryService inventoryService) : ISaleService
+public class SaleService(AppDbContext db, IInventoryService inventoryService, IAppSettingsService settingsService) : ISaleService
 {
+    // Rate applied to Draft Sales for display; loaded once per request before any DTO is built.
+    private decimal _currentGstRate;
+
     public async Task<PagedResult<SaleDto>> ListAsync(ListSalesFilter filter, PageRequest? page = null, CancellationToken ct = default)
     {
+        _currentGstRate = await settingsService.GetGstRateAsync(ct);
+
         var query = db.Sales
             .Include(s => s.Store)
             .Include(s => s.Lines)
@@ -38,6 +44,8 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
 
     public async Task<SaleDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
+        _currentGstRate = await settingsService.GetGstRateAsync(ct);
+
         var sale = await LoadAsync(id, ct);
         if (sale is null)
             return null;
@@ -207,6 +215,9 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
 
         var now = DateTimeOffset.UtcNow;
 
+        // Snapshot the rate and each line's GST so later rate changes never alter this Sale.
+        var gstRate = await settingsService.GetGstRateAsync(ct);
+
         // Re-validate every line against current Inventory before posting anything.
         foreach (var line in sale.Lines)
             await RequireStockAsync(sale, line.ProductVariant?.Sku ?? string.Empty, line.ProductVariantId, line.Quantity, ct);
@@ -225,7 +236,11 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
                 ct);
         }
 
+        foreach (var line in sale.Lines)
+            line.GstAmount = Gst.Extract(LineTotal(line), gstRate);
+
         sale.Status = SaleStatus.Completed;
+        sale.GstRate = gstRate;
         sale.PaymentType = dto.PaymentType;
         sale.PaymentAmount = dto.PaymentAmount;
         sale.CompletedDate = now;
@@ -328,23 +343,31 @@ public class SaleService(AppDbContext db, IInventoryService inventoryService) : 
 
     private static string FormatSaleNumber(int sequenceNumber) => $"SL-{sequenceNumber:D4}";
 
-    private static SaleLineDto ToLineDto(SaleLine l) =>
+    private static SaleLineDto ToLineDto(SaleLine l, decimal rate) =>
         new(l.Id, l.SaleId, l.ProductVariantId,
             l.ProductVariant?.Sku ?? string.Empty,
             l.ProductVariant?.Barcode,
             l.ProductVariant?.Product?.Name ?? string.Empty,
-            l.Quantity, l.UnitPrice, l.Discount, LineTotal(l), null,
+            l.Quantity, l.UnitPrice, l.Discount, LineTotal(l),
+            l.GstAmount ?? Gst.Extract(LineTotal(l), rate), null,
             l.CreatedAt, l.UpdatedAt, l.CreatedBy, l.UpdatedBy);
 
-    private static SaleDto ToDto(Sale s) =>
-        new(s.Id,
+    private SaleDto ToDto(Sale s)
+    {
+        var rate = s.GstRate ?? _currentGstRate;
+        var lines = s.Lines.Select(l => ToLineDto(l, rate)).ToList();
+        var total = s.Lines.Sum(LineTotal);
+        var gst = lines.Sum(l => l.GstAmount);
+
+        return new(s.Id,
             FormatSaleNumber(s.SequenceNumber),
             s.StoreId, s.Store?.Name ?? string.Empty,
             s.Status,
             s.PaymentType, s.PaymentAmount,
-            s.Lines.Sum(LineTotal),
+            total, rate, gst, total - gst,
             s.CompletedDate, s.CompletedBy,
             s.VoidedDate, s.VoidedBy,
             s.CreatedAt, s.UpdatedAt, s.CreatedBy, s.UpdatedBy,
-            s.Lines.Select(ToLineDto).ToList());
+            lines);
+    }
 }

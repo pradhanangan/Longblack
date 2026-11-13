@@ -106,6 +106,12 @@ export function SaleDetailPage() {
       >
         <Typography color="text.secondary">Store</Typography>
         <Typography>{sale.storeName}</Typography>
+        <Typography color="text.secondary">Subtotal (excl. GST)</Typography>
+        <Typography>${sale.subtotal.toFixed(2)}</Typography>
+        <Typography color="text.secondary">
+          GST ({parseFloat((sale.gstRate * 100).toFixed(2))}%)
+        </Typography>
+        <Typography>${sale.gstAmount.toFixed(2)}</Typography>
         <Typography color="text.secondary">Total (GST incl.)</Typography>
         <Typography>${sale.total.toFixed(2)}</Typography>
         <Typography color="text.secondary">Payment</Typography>

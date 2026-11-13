@@ -12,10 +12,8 @@ public class BrandService(AppDbContext db) : IBrandService
     {
         var query = db.Brands.AsQueryable();
 
-        if (status is not null)
-            query = query.Where(b => b.Status == status);
-        else
-            query = query.Where(b => b.Status == ReferenceDataStatus.Active);
+        if (!string.Equals(status, ReferenceDataStatus.All, StringComparison.OrdinalIgnoreCase))
+            query = query.Where(b => b.Status == (status ?? ReferenceDataStatus.Active));
 
         return await query
             .OrderBy(b => b.Name)
@@ -62,16 +60,14 @@ public class BrandService(AppDbContext db) : IBrandService
         var brand = await db.Brands.FindAsync([id], ct)
             ?? throw new NotFoundException(nameof(Brand), id);
 
+        if (dto.Code != brand.Code)
+            throw new InvalidStateException("A brand's code cannot be changed once created.");
+
         var duplicate = await db.Brands.AnyAsync(b => b.Name == dto.Name && b.Id != id, ct);
         if (duplicate)
             throw new DuplicateException(nameof(Brand), "name", dto.Name);
 
-        var codeDuplicate = await db.Brands.AnyAsync(b => b.Code == dto.Code && b.Id != id, ct);
-        if (codeDuplicate)
-            throw new DuplicateException(nameof(Brand), "code", dto.Code);
-
         brand.Name = dto.Name;
-        brand.Code = dto.Code;
         brand.UpdatedAt = DateTimeOffset.UtcNow;
         brand.UpdatedBy = updatedBy;
 

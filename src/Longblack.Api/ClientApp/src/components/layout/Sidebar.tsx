@@ -1,3 +1,4 @@
+import CategoryIcon from "@mui/icons-material/Category";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
@@ -6,6 +7,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import SettingsIcon from "@mui/icons-material/Settings";
+import SellIcon from "@mui/icons-material/Sell";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import StoreIcon from "@mui/icons-material/Store";
 import StyleIcon from "@mui/icons-material/Style";
@@ -54,13 +56,16 @@ const NAV_GROUPS = [
       { label: "Products", icon: <StyleIcon />, path: "/products" },
       { label: "Stores", icon: <StoreIcon />, path: "/stores" },
       { label: "Suppliers", icon: <PeopleIcon />, path: "/suppliers" },
+      { label: "Brands", icon: <SellIcon />, path: "/brands", adminOnly: true },
+      { label: "Categories", icon: <CategoryIcon />, path: "/categories", adminOnly: true },
       { label: "Settings", icon: <SettingsIcon />, path: "/settings" },
     ],
   },
 ];
 
 export function Sidebar() {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const isAdmin = user?.roles.includes("Admin") ?? false;
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -99,7 +104,9 @@ export function Sidebar() {
                 {group.label}
               </ListSubheader>
             )}
-            {group.items.map((item) => (
+            {group.items
+              .filter((item) => !("adminOnly" in item && item.adminOnly) || isAdmin)
+              .map((item) => (
               <ListItem key={item.label} disablePadding>
                 <ListItemButton
                   component={NavLink}

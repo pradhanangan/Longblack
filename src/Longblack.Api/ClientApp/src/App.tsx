@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
-import { ProtectedRoute } from "./components/layout/ProtectedRoute";
+import { AdminRoute, ProtectedRoute } from "./components/layout/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SnackbarProvider } from "./contexts/SnackbarContext";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -24,6 +24,8 @@ import { StockTransferListPage } from "./pages/StockTransferListPage";
 import { StoreDetailPage } from "./pages/StoreDetailPage";
 import { StoreListPage } from "./pages/StoreListPage";
 import { SupplierListPage } from "./pages/SupplierListPage";
+import { BrandListPage } from "./pages/BrandListPage";
+import { CategoryListPage } from "./pages/CategoryListPage";
 import { SettingsPage } from "./pages/SettingsPage";
 
 const queryClient = new QueryClient({
@@ -119,6 +121,10 @@ export default function App() {
                     <Route path="/sales/:id" element={<SaleDetailPage />} />
                     <Route path="/suppliers" element={<SupplierListPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
+                    <Route element={<AdminRoute />}>
+                      <Route path="/brands" element={<BrandListPage />} />
+                      <Route path="/categories" element={<CategoryListPage />} />
+                    </Route>
                   </Route>
                 </Route>
               </Routes>

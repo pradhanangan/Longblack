@@ -8,6 +8,10 @@ Recording stock that physically arrives at the store from a supplier, and the re
 A record of a delivery of stock arriving at the Warehouse Store (the only Store a Goods Receipt can target), containing one or more lines. Progresses through `Draft` → `Received` → (optionally, from `Draft` only) `Cancelled`. Marking a receipt `Received` is the action that increases inventory; a `Received` receipt is then immutable. May optionally reference one Purchase Order from the same Supplier; lines are then pre-filled with outstanding quantities, may only be for variants on that Purchase Order, and may exceed the ordered quantity with a warning rather than a block.
 _Avoid_: Delivery, shipment, receiving order
 
+**Goods Receipt Upload**:
+Creating a `Draft` Goods Receipt from a CSV file of lines (SKU or Barcode, quantity, unit cost), with the Supplier, received date and optional Purchase Order chosen by the user rather than the file. All-or-nothing: any invalid row (unknown or inactive variant, non-positive quantity, negative cost, variant not on the chosen Purchase Order) rejects the whole file with per-row errors. It never marks the receipt `Received`; that stays an explicit later step.
+_Avoid_: Import, bulk receive
+
 **Goods Receipt Line**:
 A single product variant + quantity + unit cost entry within a Goods Receipt. Multiple lines for the same variant on one receipt are allowed (e.g. separate cartons at different costs).
 _Avoid_: Receipt item, line item
@@ -64,9 +68,29 @@ _Avoid_: Sale item, line item
 The GST-inclusive price a product variant sells for, held on the Product Variant. Each Sale Line copies it at sale time so later price changes never alter past Sales. Distinct from purchase cost, which lives only on Goods Receipt Lines.
 _Avoid_: Retail price, RRP
 
+**GST**:
+The tax portion contained in a Sale's GST-inclusive total, extracted rather than added on top: per Sale Line, `discounted line total × rate ÷ (1 + rate)` rounded to cents, with the Sale's GST being the sum of its lines. Worked out and fixed when a Sale is `Completed`, together with the GST Rate then in force, so later rate changes never alter past Sales. A voided Sale keeps its GST for audit. Shown on the Sale only (the Sale's subtotal excluding GST, the GST, and the total); not on the Dashboard.
+_Avoid_: Tax, VAT
+
+**GST Rate**:
+The single percentage (0%–100%) applied to every item when working out GST, set by an Admin in Settings. Not per product. A change affects Sales completed afterwards, including Draft Sales not yet completed.
+_Avoid_: Tax rate
+
 **Payment**:
 How a Sale was paid (a payment type and amount). Recorded for reference only; no payment processing.
 _Avoid_: Tender
+
+## Catalogue Reference Data
+
+Admin-maintained lists that classify Products. Create, edit and activate/deactivate are Admin-only and done from the UI; never deleted. Inactive entries disappear from pickers, but existing Products keep showing them.
+
+**Brand**:
+Who makes or labels a Product. Has a unique `Name`, a unique `Code` (used in SKU generation, fixed once created) and a `Status` (`Active`/`Inactive`).
+_Avoid_: Label, make
+
+**Category**:
+How a Product is grouped (e.g. Men → Jeans). Has a `Name` unique among its siblings (so "Men / Jeans" and "Women / Jeans" can coexist), a unique `Code` (fixed once created) and a `Status`. At most two levels: a root Category, or a child under a root. Shown as "Parent / Child" so a child is never displayed bare. Deactivating a parent does not deactivate its children.
+_Avoid_: Type, department
 
 ## Product Images
 
@@ -105,7 +129,7 @@ A person who signs in, holding exactly one Role (`Admin`, `Manager` or `Staff`).
 _Avoid_: Account, employee, operator
 
 **Settings**:
-Configuration page open to every Role. Everyone sees "My account" (change own password); only Admins also see "Users".
+Configuration page open to every Role. Everyone sees "My account" (change own password); only Admins also see "Users" and "GST" (the GST Rate).
 _Avoid_: Admin panel, preferences
 
 ## Stock Take

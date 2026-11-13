@@ -316,6 +316,7 @@ export interface SaleLineDto {
   unitPrice: number
   discount: number
   lineTotal: number
+  gstAmount: number
   availableQuantity: number | null
   createdAt: string
   updatedAt: string
@@ -332,6 +333,9 @@ export interface SaleDto {
   paymentType: string | null
   paymentAmount: number | null
   total: number
+  gstRate: number
+  gstAmount: number
+  subtotal: number
   completedDate: string | null
   completedBy: string | null
   voidedDate: string | null

@@ -12,6 +12,8 @@ public record SaleLineDto(
     decimal Discount,
     // Quantity * UnitPrice - Discount.
     decimal LineTotal,
+    // GST included in LineTotal: stored once the Sale is completed, otherwise calculated at the current rate.
+    decimal GstAmount,
     // Current stock at the Sale's Store; only populated when fetching a single Sale.
     int? AvailableQuantity,
     DateTimeOffset CreatedAt,
@@ -28,6 +30,11 @@ public record SaleDto(
     string? PaymentType,
     decimal? PaymentAmount,
     decimal Total,
+    // Fraction (0.15 = 15%): snapshotted on completion, otherwise the current rate.
+    decimal GstRate,
+    decimal GstAmount,
+    // Total excluding GST.
+    decimal Subtotal,
     DateTimeOffset? CompletedDate,
     string? CompletedBy,
     DateTimeOffset? VoidedDate,

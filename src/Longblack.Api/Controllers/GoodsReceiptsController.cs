@@ -66,6 +66,34 @@ public class GoodsReceiptsController(IGoodsReceiptService goodsReceiptService) :
         }
     }
 
+    [HttpPost("upload")]
+    [Authorize(Roles = "Staff,Manager,Admin")]
+    [RequestSizeLimit(GoodsReceiptCsvParser.MaxBytes + 4096)]
+    public async Task<IActionResult> Upload(
+        [FromForm] IFormFile? file,
+        [FromForm] Guid supplierId,
+        [FromForm] DateTimeOffset? receivedDate,
+        [FromForm] Guid? purchaseOrderId,
+        CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { message = "A CSV file is required." });
+        if (file.Length > GoodsReceiptCsvParser.MaxBytes)
+            return BadRequest(new { message = "The file exceeds the 5 MB limit." });
+
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            var receipt = await goodsReceiptService.CreateFromCsvAsync(
+                new UploadGoodsReceiptDto(supplierId, receivedDate, purchaseOrderId), stream, CurrentUser, ct);
+            return CreatedAtAction(nameof(GetById), new { id = receipt.Id }, ToResponse(receipt));
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "Staff,Manager,Admin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateGoodsReceiptRequest request, CancellationToken ct)

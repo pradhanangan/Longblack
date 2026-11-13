@@ -19,6 +19,9 @@ public class Sale
     public string? PaymentType { get; set; }
     public decimal? PaymentAmount { get; set; }
 
+    // Snapshot of the GST rate (fraction, e.g. 0.15) taken on completion; null while Draft.
+    public decimal? GstRate { get; set; }
+
     public DateTimeOffset? CompletedDate { get; set; }
     public string? CompletedBy { get; set; }
 

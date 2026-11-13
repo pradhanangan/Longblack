@@ -145,11 +145,11 @@ public class SalesController(ISaleService saleService) : ApiControllerBase
 
     private static SaleResponse ToResponse(SaleDto dto) =>
         new(dto.Id, dto.SaleNumber, dto.StoreId, dto.StoreName, dto.Status,
-            dto.PaymentType, dto.PaymentAmount, dto.Total,
+            dto.PaymentType, dto.PaymentAmount, dto.Total, dto.GstRate, dto.GstAmount, dto.Subtotal,
             dto.CompletedDate, dto.CompletedBy, dto.VoidedDate, dto.VoidedBy,
             dto.CreatedAt, dto.UpdatedAt, dto.CreatedBy, dto.UpdatedBy,
             dto.Lines.Select(l => new SaleLineResponse(
                 l.Id, l.SaleId, l.ProductVariantId, l.Sku, l.Barcode, l.ProductName,
-                l.Quantity, l.UnitPrice, l.Discount, l.LineTotal, l.AvailableQuantity,
+                l.Quantity, l.UnitPrice, l.Discount, l.LineTotal, l.GstAmount, l.AvailableQuantity,
                 l.CreatedAt, l.UpdatedAt, l.CreatedBy, l.UpdatedBy)).ToList());
 }

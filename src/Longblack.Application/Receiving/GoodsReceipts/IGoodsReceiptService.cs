@@ -12,6 +12,9 @@ public interface IGoodsReceiptService
     // Creates a Draft receipt for the Purchase Order's Supplier with lines pre-filled from outstanding quantities and expected costs.
     Task<GoodsReceiptDto> CreateFromPurchaseOrderAsync(Guid purchaseOrderId, string createdBy, CancellationToken ct = default);
 
+    // Creates a Draft receipt with lines from a CSV; all-or-nothing, throws UploadValidationException listing every bad row.
+    Task<GoodsReceiptDto> CreateFromCsvAsync(UploadGoodsReceiptDto dto, Stream csv, string createdBy, CancellationToken ct = default);
+
     Task<GoodsReceiptDto> AddLineAsync(Guid id, AddGoodsReceiptLineDto dto, string updatedBy, CancellationToken ct = default);
     Task<GoodsReceiptDto> UpdateLineAsync(Guid id, Guid lineId, UpdateGoodsReceiptLineDto dto, string updatedBy, CancellationToken ct = default);
     Task<GoodsReceiptDto> RemoveLineAsync(Guid id, Guid lineId, string updatedBy, CancellationToken ct = default);

@@ -19,11 +19,13 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (!res.ok) {
     let message = `Request failed: ${res.status}`
+    let errors: unknown
     try {
       const body = await res.json()
       message = body?.message ?? message
+      errors = body?.errors
     } catch { /* ignore parse errors */ }
-    const err = Object.assign(new Error(message), { status: res.status })
+    const err = Object.assign(new Error(message), { status: res.status, errors })
     throw err
   }
 
@@ -55,6 +57,7 @@ export const api = {
     request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
   put: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
+  postForm: <T>(path: string, form: FormData) => request<T>(path, { method: 'POST', body: form }),
   putFile: <T>(path: string, file: File) => {
     const form = new FormData()
     form.append('file', file)
