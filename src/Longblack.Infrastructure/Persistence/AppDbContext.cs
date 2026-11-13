@@ -419,6 +419,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.HasKey(s => s.Id);
             e.Property(s => s.Id).HasColumnName("id").ValueGeneratedNever();
             e.Property(s => s.GstRate).HasColumnName("gst_rate").HasPrecision(5, 4);
+            e.Property(s => s.LowStockThreshold).HasColumnName("low_stock_threshold");
             e.Property(s => s.UpdatedAt).HasColumnName("updated_at");
             e.Property(s => s.UpdatedBy).HasColumnName("updated_by").IsRequired();
         });

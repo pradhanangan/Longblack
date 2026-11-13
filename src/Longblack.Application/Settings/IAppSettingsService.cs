@@ -1,6 +1,6 @@
 namespace Longblack.Application.Settings;
 
-public record AppSettingsDto(decimal GstRate, DateTimeOffset UpdatedAt, string UpdatedBy);
+public record AppSettingsDto(decimal GstRate, int LowStockThreshold, DateTimeOffset UpdatedAt, string UpdatedBy);
 
 public interface IAppSettingsService
 {
@@ -10,4 +10,9 @@ public interface IAppSettingsService
     Task<decimal> GetGstRateAsync(CancellationToken ct = default);
 
     Task<AppSettingsDto> UpdateGstRateAsync(decimal gstRate, string updatedBy, CancellationToken ct = default);
+
+    Task<int> GetLowStockThresholdAsync(CancellationToken ct = default);
+
+    // Must be zero or more.
+    Task<AppSettingsDto> UpdateLowStockThresholdAsync(int threshold, string updatedBy, CancellationToken ct = default);
 }

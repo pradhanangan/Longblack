@@ -11,11 +11,30 @@ public class AppSettingsService(AppDbContext db) : IAppSettingsService
     public async Task<AppSettingsDto> GetAsync(CancellationToken ct = default)
     {
         var settings = await RequireAsync(ct);
-        return new(settings.GstRate, settings.UpdatedAt, settings.UpdatedBy);
+        return ToDto(settings);
     }
 
     public async Task<decimal> GetGstRateAsync(CancellationToken ct = default) =>
         (await RequireAsync(ct)).GstRate;
+
+    public async Task<int> GetLowStockThresholdAsync(CancellationToken ct = default) =>
+        (await RequireAsync(ct)).LowStockThreshold;
+
+    public async Task<AppSettingsDto> UpdateLowStockThresholdAsync(int threshold, string updatedBy, CancellationToken ct = default)
+    {
+        if (threshold < 0)
+            throw new InvalidStateException("Low stock threshold cannot be negative.");
+
+        var settings = await RequireAsync(ct);
+        settings.LowStockThreshold = threshold;
+        settings.UpdatedAt = DateTimeOffset.UtcNow;
+        settings.UpdatedBy = updatedBy;
+        await db.SaveChangesAsync(ct);
+
+        return ToDto(settings);
+    }
+
+    private static AppSettingsDto ToDto(AppSettings s) => new(s.GstRate, s.LowStockThreshold, s.UpdatedAt, s.UpdatedBy);
 
     public async Task<AppSettingsDto> UpdateGstRateAsync(decimal gstRate, string updatedBy, CancellationToken ct = default)
     {
@@ -30,7 +49,7 @@ public class AppSettingsService(AppDbContext db) : IAppSettingsService
         settings.UpdatedBy = updatedBy;
         await db.SaveChangesAsync(ct);
 
-        return new(settings.GstRate, settings.UpdatedAt, settings.UpdatedBy);
+        return ToDto(settings);
     }
 
     private async Task<AppSettings> RequireAsync(CancellationToken ct) =>

@@ -120,6 +120,26 @@ _Avoid_: Home, overview
 A Stock Transfer that is `Dispatched` but not yet `Received`.
 _Avoid_: Pending transfer
 
+## Reports
+
+Read-only, filterable drill-down views over live data, for Admins and Managers only.
+
+**Reports**:
+A single page where a Manager or Admin picks a report type and shared filters (date range, Store defaulting to all Stores, Brand/Category where relevant), and can export the filtered result as CSV. Complements the Dashboard, which stays a summary. Quantity-only: shows no stock value or margin, because purchase cost lives only on Goods Receipt Lines. Day boundaries use NZ local time. Report types: Stock on Hand, Stock Movement, Sales Summary, Stock Take Variance.
+_Avoid_: Analytics, BI
+
+**Low Stock**:
+A variant whose on-hand quantity at a Store is at or below the Low Stock Threshold.
+
+**Low Stock Threshold**:
+A single global quantity set in Settings (default 0), not per variant.
+
+**Sales Summary**:
+Totals of `Completed` Sales by completion time. Voided Sales are excluded from totals and shown as a separate voided count and amount. Shows GST-inclusive total, GST, and ex-GST subtotal.
+
+**Stock Take Variance Report**:
+Per Stock Take totals (shrinkage = total negative Variance, overage = total positive Variance) with drill-down to per-variant Variance. Covers `Approved` Stock Takes and also `Completed` ones, marked as pending.
+
 ## Users & Settings
 
 Who can sign in and what they may do.

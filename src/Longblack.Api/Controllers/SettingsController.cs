@@ -10,6 +10,8 @@ public class SettingsController(IAppSettingsService settingsService) : ApiContro
 {
     public record UpdateGstRateRequest(decimal GstRate);
 
+    public record UpdateLowStockThresholdRequest(int LowStockThreshold);
+
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken ct) =>
         Ok(await settingsService.GetAsync(ct));
@@ -21,6 +23,20 @@ public class SettingsController(IAppSettingsService settingsService) : ApiContro
         try
         {
             return Ok(await settingsService.UpdateGstRateAsync(request.GstRate, CurrentUser, ct));
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    [HttpPut("low-stock-threshold")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateLowStockThreshold([FromBody] UpdateLowStockThresholdRequest request, CancellationToken ct)
+    {
+        try
+        {
+            return Ok(await settingsService.UpdateLowStockThresholdAsync(request.LowStockThreshold, CurrentUser, ct));
         }
         catch (Exception ex)
         {

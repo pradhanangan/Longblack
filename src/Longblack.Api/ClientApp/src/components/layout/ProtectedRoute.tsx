@@ -12,3 +12,9 @@ export function AdminRoute() {
   if (!user?.roles.includes('Admin')) return <Navigate to="/dashboard" replace />
   return <Outlet />
 }
+
+export function ManagerRoute() {
+  const { user } = useAuth()
+  if (!user?.roles.some((r) => r === 'Admin' || r === 'Manager')) return <Navigate to="/dashboard" replace />
+  return <Outlet />
+}

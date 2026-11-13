@@ -342,6 +342,56 @@ function GstTab() {
   );
 }
 
+function LowStockTab() {
+  const qc = useQueryClient();
+  const { showSuccess, showError } = useSnackbar();
+  const [value, setValue] = useState<string | null>(null);
+
+  const { data } = useQuery<{ lowStockThreshold: number }>({
+    queryKey: ["settings"],
+    queryFn: () => api.get("/api/settings"),
+  });
+
+  const shown = value ?? (data ? String(data.lowStockThreshold) : "");
+
+  const save = useMutation({
+    mutationFn: () =>
+      api.put("/api/settings/low-stock-threshold", { lowStockThreshold: Number(shown) }),
+    onSuccess: () => {
+      showSuccess("Low stock threshold updated.");
+      setValue(null);
+      qc.invalidateQueries({ queryKey: ["settings"] });
+      qc.invalidateQueries({ queryKey: ["reports"] });
+    },
+    onError: (e: Error) => showError(e.message),
+  });
+
+  const invalid = shown === "" || !Number.isInteger(Number(shown)) || Number(shown) < 0;
+
+  return (
+    <Box sx={{ maxWidth: 400, display: "flex", flexDirection: "column", gap: 2 }}>
+      <Typography color="text.secondary">
+        The Stock on Hand report flags a variant as Low Stock when its quantity at a
+        Store is at or below this number. It applies to every variant.
+      </Typography>
+      <TextField
+        label="Low stock threshold"
+        type="number"
+        value={shown}
+        onChange={(e) => setValue(e.target.value)}
+        slotProps={{ htmlInput: { min: 0, step: 1 } }}
+      />
+      <Button
+        variant="contained"
+        disabled={invalid || value === null || save.isPending}
+        onClick={() => save.mutate()}
+      >
+        Save
+      </Button>
+    </Box>
+  );
+}
+
 export function SettingsPage() {
   const { user } = useAuth();
   const isAdmin = user?.roles.includes("Admin") ?? false;
@@ -356,10 +406,12 @@ export function SettingsPage() {
         <Tab label="My account" />
         {isAdmin && <Tab label="Users" />}
         {isAdmin && <Tab label="GST" />}
+        {isAdmin && <Tab label="Low stock" />}
       </Tabs>
       {tab === 0 && <MyAccountTab />}
       {tab === 1 && isAdmin && <UsersTab />}
       {tab === 2 && isAdmin && <GstTab />}
+      {tab === 3 && isAdmin && <LowStockTab />}
     </Box>
   );
 }

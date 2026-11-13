@@ -51,7 +51,7 @@ export function QuickCountEntry({ stockTakeId, items }: Props) {
     <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', mb: 3, flexWrap: 'wrap' }}>
       <Autocomplete
         size="small"
-        sx={{ minWidth: 320 }}
+        sx={{ minWidth: { sm: 320 }, width: { xs: '100%', sm: 'auto' } }}
         options={items}
         value={selected}
         inputValue={inputValue}

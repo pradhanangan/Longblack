@@ -251,7 +251,7 @@ export function VariantMatrixDialog({
             {rows.length === 0 ? (
               <Typography color="text.secondary">No combinations to generate.</Typography>
             ) : (
-              <Table size="small">
+              <Table size="small" data-no-stack>
                 <TableHead>
                   <TableRow>
                     <TableCell>Colour</TableCell>

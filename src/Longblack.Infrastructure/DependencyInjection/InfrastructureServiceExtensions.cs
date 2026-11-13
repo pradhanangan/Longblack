@@ -10,6 +10,7 @@ using Longblack.Application.Dashboard;
 using Longblack.Application.Inventory;
 using Longblack.Application.Receiving.GoodsReceipts;
 using Longblack.Application.Purchasing;
+using Longblack.Application.Reports;
 using Longblack.Application.StockTake;
 using Longblack.Application.Sales;
 using Longblack.Application.Settings;
@@ -22,6 +23,7 @@ using Longblack.Infrastructure.Inventory;
 using Longblack.Infrastructure.Persistence;
 using Longblack.Infrastructure.Purchasing;
 using Longblack.Infrastructure.Receiving;
+using Longblack.Infrastructure.Reports;
 using Longblack.Infrastructure.StockTake;
 using Longblack.Infrastructure.Sales;
 using Longblack.Infrastructure.Settings;
@@ -74,6 +76,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IStockTransferService, StockTransferService>();
         services.AddScoped<ISaleService, SaleService>();
         services.AddScoped<IAppSettingsService, AppSettingsService>();
+        services.AddScoped<IReportService, ReportService>();
 
         services.Configure<CompanyOptions>(configuration.GetSection(CompanyOptions.SectionName));
         services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));

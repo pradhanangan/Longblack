@@ -1,3 +1,4 @@
+import AssessmentIcon from "@mui/icons-material/Assessment";
 import CategoryIcon from "@mui/icons-material/Category";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import InventoryIcon from "@mui/icons-material/Inventory";
@@ -48,6 +49,7 @@ const NAV_GROUPS = [
       { label: "Stock Take", icon: <ShoppingCartIcon />, path: "/stock-takes" },
       { label: "Stock Transfers", icon: <SwapHorizIcon />, path: "/stock-transfers" },
       { label: "Sales", icon: <PointOfSaleIcon />, path: "/sales" },
+      { label: "Reports", icon: <AssessmentIcon />, path: "/reports", managerOnly: true },
     ],
   },
   {
@@ -63,26 +65,26 @@ const NAV_GROUPS = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileOpen: boolean;
+  onMobileClose: () => void;
+}
+
+export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const { logout, user } = useAuth();
   const isAdmin = user?.roles.includes("Admin") ?? false;
+  const isManager = isAdmin || (user?.roles.includes("Manager") ?? false);
   const navigate = useNavigate();
   const location = useLocation();
 
   function handleLogout() {
+    onMobileClose();
     logout();
     navigate("/login");
   }
 
-  return (
-    <Drawer
-      variant="permanent"
-      sx={{
-        width: DRAWER_WIDTH,
-        flexShrink: 0,
-        "& .MuiDrawer-paper": { width: DRAWER_WIDTH, boxSizing: "border-box" },
-      }}
-    >
+  const content = (
+    <>
       <Toolbar sx={{ justifyContent: "center" }}>
         <Typography
           variant="h6"
@@ -106,12 +108,14 @@ export function Sidebar() {
             )}
             {group.items
               .filter((item) => !("adminOnly" in item && item.adminOnly) || isAdmin)
+              .filter((item) => !("managerOnly" in item && item.managerOnly) || isManager)
               .map((item) => (
               <ListItem key={item.label} disablePadding>
                 <ListItemButton
                   component={NavLink}
                   to={item.path}
                   selected={location.pathname.startsWith(item.path)}
+                  onClick={onMobileClose}
                 >
                   <ListItemIcon sx={LIST_ICON_SX}>{item.icon}</ListItemIcon>
                   <ListItemText primary={item.label} />
@@ -133,7 +137,37 @@ export function Sidebar() {
           </ListItemButton>
         </ListItem>
       </List>
-    </Drawer>
+    </>
+  );
+
+  const paperSx = { width: DRAWER_WIDTH, boxSizing: "border-box" };
+
+  return (
+    <>
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={onMobileClose}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": paperSx,
+        }}
+      >
+        {content}
+      </Drawer>
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: "none", md: "block" },
+          width: DRAWER_WIDTH,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": paperSx,
+        }}
+      >
+        {content}
+      </Drawer>
+    </>
   );
 }
 

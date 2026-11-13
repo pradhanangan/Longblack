@@ -10,6 +10,9 @@ public class AppSettings
     // Fraction, not a percentage: 0.15 means 15%. Applied to GST-inclusive Selling Prices when a Sale is completed.
     public decimal GstRate { get; set; }
 
+    // A variant at a Store is Low Stock when its quantity is at or below this value. Global, not per variant.
+    public int LowStockThreshold { get; set; }
+
     public DateTimeOffset UpdatedAt { get; set; }
     public string UpdatedBy { get; set; } = string.Empty;
 }
