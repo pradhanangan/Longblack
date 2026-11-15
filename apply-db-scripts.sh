@@ -12,6 +12,8 @@ schema_files=(
   db/009-sales-schema.sql
   db/010-purchase-orders-schema.sql
   db/011-product-images-schema.sql
+  db/012-gst-settings.sql
+  db/013-reports-settings.sql
 )
 
 for file in "${schema_files[@]}"; do

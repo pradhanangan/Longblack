@@ -4,10 +4,6 @@ import {
   Button,
   Chip,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Table,
   TableBody,
   TableCell,
@@ -20,6 +16,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { StoreDto } from "../api/types";
 import { StoreFormDialog } from "../components/stores/StoreFormDialog";
+import { FilterPanel } from "../components/common/FilterPanel";
 import { GridPagination } from "../components/common/GridPagination";
 import { usePagedList } from "../components/common/usePagedList";
 import { useAuth } from "../contexts/AuthContext";
@@ -60,20 +57,22 @@ export function StoreListPage() {
 
       <StoreFormDialog open={createOpen} onClose={() => setCreateOpen(false)} />
 
-      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Status</InputLabel>
-          <Select
-            value={status}
-            label="Status"
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="Active">Active</MenuItem>
-            <MenuItem value="Closed">Closed</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
+      <FilterPanel
+        fields={[
+          {
+            key: "status",
+            label: "Status",
+            kind: "select",
+            allLabel: "All",
+            options: [
+              { value: "Active", label: "Active" },
+              { value: "Closed", label: "Closed" },
+            ],
+          },
+        ]}
+        values={{ status }}
+        onApply={(v) => setStatus(v.status)}
+      />
 
       {(isLoading || isError || stores?.length === 0) && (
         <Box

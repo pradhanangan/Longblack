@@ -4,16 +4,11 @@ import {
   Button,
   Chip,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Toolbar,
   Typography,
 } from "@mui/material";
@@ -23,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { SaleDto, StoreDto } from "../api/types";
 import { SaleFormDialog } from "../components/sales/SaleFormDialog";
+import { FilterPanel } from "../components/common/FilterPanel";
 import { GridPagination } from "../components/common/GridPagination";
 import { usePagedList } from "../components/common/usePagedList";
 import { saleStatusColor } from "../components/sales/saleStatus";
@@ -75,53 +71,36 @@ export function SaleListPage() {
 
       <SaleFormDialog open={createOpen} onClose={() => setCreateOpen(false)} />
 
-      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Store</InputLabel>
-          <Select
-            value={storeId}
-            label="Store"
-            onChange={(e) => setStoreId(e.target.value)}
-          >
-            <MenuItem value="">All</MenuItem>
-            {stores?.map((s) => (
-              <MenuItem key={s.id} value={s.id}>
-                {s.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Status</InputLabel>
-          <Select
-            value={status}
-            label="Status"
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="Draft">Draft</MenuItem>
-            <MenuItem value="Completed">Completed</MenuItem>
-            <MenuItem value="Voided">Voided</MenuItem>
-            <MenuItem value="Cancelled">Cancelled</MenuItem>
-          </Select>
-        </FormControl>
-        <TextField
-          size="small"
-          type="date"
-          label="From"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-        <TextField
-          size="small"
-          type="date"
-          label="To"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-      </Box>
+      <FilterPanel
+        fields={[
+          {
+            key: "storeId",
+            label: "Store",
+            kind: "select",
+            allLabel: "All",
+            options: stores?.map((s) => ({ value: s.id, label: s.name })),
+          },
+          {
+            key: "status",
+            label: "Status",
+            kind: "select",
+            allLabel: "All",
+            options: ["Draft", "Completed", "Voided", "Cancelled"].map((s) => ({
+              value: s,
+              label: s,
+            })),
+          },
+          { key: "from", label: "From", kind: "date" },
+          { key: "to", label: "To", kind: "date" },
+        ]}
+        values={{ storeId, status, from, to }}
+        onApply={(v) => {
+          setStoreId(v.storeId);
+          setStatus(v.status);
+          setFrom(v.from);
+          setTo(v.to);
+        }}
+      />
 
       {(isLoading || isError || sales?.length === 0) && (
         <Box

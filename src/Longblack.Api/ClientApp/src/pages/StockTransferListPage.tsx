@@ -4,10 +4,6 @@ import {
   Button,
   Chip,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Table,
   TableBody,
   TableCell,
@@ -22,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { StockTransferDto, StoreDto } from "../api/types";
 import { StockTransferFormDialog } from "../components/stockTransfers/StockTransferFormDialog";
+import { FilterPanel } from "../components/common/FilterPanel";
 import { GridPagination } from "../components/common/GridPagination";
 import { usePagedList } from "../components/common/usePagedList";
 import { useAuth } from "../contexts/AuthContext";
@@ -99,52 +96,39 @@ export function StockTransferListPage() {
         onClose={() => setCreateOpen(false)}
       />
 
-      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Source Store</InputLabel>
-          <Select
-            value={sourceStoreId}
-            label="Source Store"
-            onChange={(e) => setSourceStoreId(e.target.value)}
-          >
-            <MenuItem value="">Any</MenuItem>
-            {stores?.map((s) => (
-              <MenuItem key={s.id} value={s.id}>
-                {s.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Destination Store</InputLabel>
-          <Select
-            value={destinationStoreId}
-            label="Destination Store"
-            onChange={(e) => setDestinationStoreId(e.target.value)}
-          >
-            <MenuItem value="">Any</MenuItem>
-            {stores?.map((s) => (
-              <MenuItem key={s.id} value={s.id}>
-                {s.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Status</InputLabel>
-          <Select
-            value={status}
-            label="Status"
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="Draft">Draft</MenuItem>
-            <MenuItem value="Dispatched">Dispatched</MenuItem>
-            <MenuItem value="Received">Received</MenuItem>
-            <MenuItem value="Cancelled">Cancelled</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
+      <FilterPanel
+        fields={[
+          {
+            key: "sourceStoreId",
+            label: "Source Store",
+            kind: "select",
+            allLabel: "Any",
+            options: stores?.map((s) => ({ value: s.id, label: s.name })),
+          },
+          {
+            key: "destinationStoreId",
+            label: "Destination Store",
+            kind: "select",
+            allLabel: "Any",
+            options: stores?.map((s) => ({ value: s.id, label: s.name })),
+          },
+          {
+            key: "status",
+            label: "Status",
+            kind: "select",
+            allLabel: "All",
+            options: ["Draft", "Dispatched", "Received", "Cancelled"].map(
+              (s) => ({ value: s, label: s }),
+            ),
+          },
+        ]}
+        values={{ sourceStoreId, destinationStoreId, status }}
+        onApply={(v) => {
+          setSourceStoreId(v.sourceStoreId);
+          setDestinationStoreId(v.destinationStoreId);
+          setStatus(v.status);
+        }}
+      />
 
       {(isLoading || isError || transfers?.length === 0) && (
         <Box

@@ -2,16 +2,11 @@ import {
   Box,
   Chip,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Toolbar,
   Typography,
 } from "@mui/material";
@@ -22,6 +17,7 @@ import { api } from "../api/client";
 import type { BrandDto, CategoryDto, StoreDto } from "../api/types";
 import { renderCategoryMenuItems } from "../components/categories/CategorySelectItems";
 import type { InventoryDto } from "../api/types";
+import { FilterPanel } from "../components/common/FilterPanel";
 import { GridPagination } from "../components/common/GridPagination";
 import { usePagedList } from "../components/common/usePagedList";
 
@@ -102,68 +98,64 @@ export function InventoryListPage() {
         <Typography variant="h5">Inventory</Typography>
       </Toolbar>
 
-      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
-        <TextField
-          label="Search"
-          size="small"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Name, code, SKU, barcode…"
-          sx={{ minWidth: 220 }}
-        />
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Store</InputLabel>
-          <Select
-            value={storeId}
-            label="Store"
-            onChange={(e) => setStoreId(e.target.value)}
-          >
-            {stores?.map((s) => (
-              <MenuItem key={s.id} value={s.id}>
-                {s.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Brand</InputLabel>
-          <Select
-            value={brandId}
-            label="Brand"
-            onChange={(e) => setBrandId(e.target.value)}
-          >
-            <MenuItem value="">All brands</MenuItem>
-            {brands?.map((b) => (
-              <MenuItem key={b.id} value={b.id}>
-                {b.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl sx={{ minWidth: 160 }}>
-          <InputLabel>Category</InputLabel>
-          <Select
-            value={categoryId}
-            label="Category"
-            onChange={(e) => setCategoryId(e.target.value)}
-          >
-            <MenuItem value="">All categories</MenuItem>
-            {renderCategoryMenuItems(categories)}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Status</InputLabel>
-          <Select
-            value={status}
-            label="Status"
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <MenuItem value="Active">Active</MenuItem>
-            <MenuItem value="Inactive">Inactive</MenuItem>
-            <MenuItem value="All">All</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
+      <FilterPanel
+        fields={[
+          {
+            key: "q",
+            label: "Search",
+            kind: "text",
+            placeholder: "Name, code, SKU, barcode…",
+          },
+          {
+            key: "storeId",
+            label: "Store",
+            kind: "select",
+            required: true,
+            options: stores?.map((s) => ({ value: s.id, label: s.name })),
+          },
+          {
+            key: "brandId",
+            label: "Brand",
+            kind: "select",
+            allLabel: "All brands",
+            options: brands?.map((b) => ({ value: b.id, label: b.name })),
+          },
+          {
+            key: "categoryId",
+            label: "Category",
+            kind: "select",
+            allLabel: "All categories",
+            renderOptions: () => renderCategoryMenuItems(categories),
+            formatValue: (v) =>
+              categories?.find((c) => c.id === v)?.name ?? v,
+          },
+          {
+            key: "status",
+            label: "Status",
+            kind: "select",
+            emptyValue: "All",
+            allLabel: "All",
+            options: [
+              { value: "Active", label: "Active" },
+              { value: "Inactive", label: "Inactive" },
+            ],
+          },
+        ]}
+        values={{
+          q: searchInput,
+          storeId,
+          brandId,
+          categoryId,
+          status,
+        }}
+        onApply={(v) => {
+          setSearchInput(v.q);
+          setStoreId(v.storeId);
+          setBrandId(v.brandId);
+          setCategoryId(v.categoryId);
+          setStatus(v.status);
+        }}
+      />
 
       {(isLoading || isError || inventory?.length === 0) && (
         <Box

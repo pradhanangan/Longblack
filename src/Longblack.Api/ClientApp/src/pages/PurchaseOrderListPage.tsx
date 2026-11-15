@@ -4,16 +4,11 @@ import {
   Button,
   Chip,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Toolbar,
   Typography,
 } from "@mui/material";
@@ -23,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { PurchaseOrderDto, SupplierDto } from "../api/types";
 import { PurchaseOrderFormDialog } from "../components/purchasing/PurchaseOrderFormDialog";
+import { FilterPanel } from "../components/common/FilterPanel";
 import { GridPagination } from "../components/common/GridPagination";
 import { usePagedList } from "../components/common/usePagedList";
 import {
@@ -106,54 +102,38 @@ export function PurchaseOrderListPage() {
         onClose={() => setCreateOpen(false)}
       />
 
-      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Supplier</InputLabel>
-          <Select
-            value={supplierId}
-            label="Supplier"
-            onChange={(e) => setSupplierId(e.target.value)}
-          >
-            <MenuItem value="">All suppliers</MenuItem>
-            {suppliers?.map((s) => (
-              <MenuItem key={s.id} value={s.id}>
-                {s.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Status</InputLabel>
-          <Select
-            value={status}
-            label="Status"
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <MenuItem value="">All</MenuItem>
-            {STATUSES.map((s) => (
-              <MenuItem key={s} value={s}>
-                {purchaseOrderStatusLabel(s)}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <TextField
-          label="Created from"
-          type="date"
-          size="small"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-        <TextField
-          label="Created to"
-          type="date"
-          size="small"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-      </Box>
+      <FilterPanel
+        fields={[
+          {
+            key: "supplierId",
+            label: "Supplier",
+            kind: "select",
+            allLabel: "All suppliers",
+            options: suppliers?.map((s) => ({ value: s.id, label: s.name })),
+            minWidth: 180,
+          },
+          {
+            key: "status",
+            label: "Status",
+            kind: "select",
+            allLabel: "All",
+            options: STATUSES.map((s) => ({
+              value: s,
+              label: purchaseOrderStatusLabel(s),
+            })),
+            minWidth: 180,
+          },
+          { key: "from", label: "Created from", kind: "date" },
+          { key: "to", label: "Created to", kind: "date" },
+        ]}
+        values={{ supplierId, status, from, to }}
+        onApply={(v) => {
+          setSupplierId(v.supplierId);
+          setStatus(v.status);
+          setFrom(v.from);
+          setTo(v.to);
+        }}
+      />
 
       {(isLoading || isError || orders?.length === 0) && (
         <Box

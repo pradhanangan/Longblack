@@ -4,10 +4,6 @@ import {
   Button,
   Chip,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Table,
   TableBody,
   TableCell,
@@ -20,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import type { StockTakeDto } from "../api/types";
 import { StockTakeFormDialog } from "../components/stockTake/StockTakeFormDialog";
+import { FilterPanel } from "../components/common/FilterPanel";
 import { GridPagination } from "../components/common/GridPagination";
 import { usePagedList } from "../components/common/usePagedList";
 import { useAuth } from "../contexts/AuthContext";
@@ -80,23 +77,21 @@ export function StockTakeListPage() {
         onClose={() => setCreateOpen(false)}
       />
 
-      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Status</InputLabel>
-          <Select
-            value={status}
-            label="Status"
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="Draft">Draft</MenuItem>
-            <MenuItem value="InProgress">InProgress</MenuItem>
-            <MenuItem value="Completed">Completed</MenuItem>
-            <MenuItem value="Approved">Approved</MenuItem>
-            <MenuItem value="Cancelled">Cancelled</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
+      <FilterPanel
+        fields={[
+          {
+            key: "status",
+            label: "Status",
+            kind: "select",
+            allLabel: "All",
+            options: ["Draft", "InProgress", "Completed", "Approved", "Cancelled"].map(
+              (s) => ({ value: s, label: s }),
+            ),
+          },
+        ]}
+        values={{ status }}
+        onApply={(v) => setStatus(v.status)}
+      />
       {(isLoading || isError || stockTakes?.length === 0) && (
         <Box
           sx={{

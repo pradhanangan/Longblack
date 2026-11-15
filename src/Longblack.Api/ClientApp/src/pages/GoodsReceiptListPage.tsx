@@ -5,10 +5,6 @@ import {
   Button,
   Chip,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Table,
   TableBody,
   TableCell,
@@ -24,6 +20,7 @@ import { api } from "../api/client";
 import type { GoodsReceiptDto, SupplierDto } from "../api/types";
 import { GoodsReceiptFormDialog } from "../components/receiving/GoodsReceiptFormDialog";
 import { GoodsReceiptUploadDialog } from "../components/receiving/GoodsReceiptUploadDialog";
+import { FilterPanel } from "../components/common/FilterPanel";
 import { GridPagination } from "../components/common/GridPagination";
 import { usePagedList } from "../components/common/usePagedList";
 import { useAuth } from "../contexts/AuthContext";
@@ -106,36 +103,33 @@ export function GoodsReceiptListPage() {
         onClose={() => setUploadOpen(false)}
       />
 
-      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Supplier</InputLabel>
-          <Select
-            value={supplierId}
-            label="Supplier"
-            onChange={(e) => setSupplierId(e.target.value)}
-          >
-            <MenuItem value="">All suppliers</MenuItem>
-            {suppliers?.map((s) => (
-              <MenuItem key={s.id} value={s.id}>
-                {s.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Status</InputLabel>
-          <Select
-            value={status}
-            label="Status"
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="Draft">Draft</MenuItem>
-            <MenuItem value="Received">Received</MenuItem>
-            <MenuItem value="Cancelled">Cancelled</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
+      <FilterPanel
+        fields={[
+          {
+            key: "supplierId",
+            label: "Supplier",
+            kind: "select",
+            allLabel: "All suppliers",
+            options: suppliers?.map((s) => ({ value: s.id, label: s.name })),
+            minWidth: 180,
+          },
+          {
+            key: "status",
+            label: "Status",
+            kind: "select",
+            allLabel: "All",
+            options: ["Draft", "Received", "Cancelled"].map((s) => ({
+              value: s,
+              label: s,
+            })),
+          },
+        ]}
+        values={{ supplierId, status }}
+        onApply={(v) => {
+          setSupplierId(v.supplierId);
+          setStatus(v.status);
+        }}
+      />
 
       {(isLoading || isError || receipts?.length === 0) && (
         <Box

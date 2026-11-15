@@ -4,16 +4,11 @@ import {
   Button,
   Chip,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Toolbar,
   Typography,
 } from "@mui/material";
@@ -28,6 +23,7 @@ import type {
   ProductDto,
 } from "../api/types";
 import { renderCategoryMenuItems } from "../components/categories/CategorySelectItems";
+import { FilterPanel } from "../components/common/FilterPanel";
 import { GridPagination } from "../components/common/GridPagination";
 import {
   DEFAULT_PAGE_SIZE,
@@ -152,54 +148,44 @@ export function ProductListPage() {
 
       <ProductFormDialog open={addOpen} onClose={() => setAddOpen(false)} />
 
-      {/* Filter bar */}
-      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
-        <TextField
-          label="Search"
-          value={searchInput}
-          onChange={(e) => updateParams({ q: e.target.value })}
-          placeholder="Name, code, SKU, barcode…"
-          sx={{ minWidth: 220 }}
-        />
-        <FormControl sx={{ minWidth: 160 }}>
-          <InputLabel>Brand</InputLabel>
-          <Select
-            value={brandId}
-            label="Brand"
-            onChange={(e) => updateParams({ brandId: e.target.value })}
-          >
-            <MenuItem value="">All brands</MenuItem>
-            {brands?.map((b) => (
-              <MenuItem key={b.id} value={b.id}>
-                {b.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl sx={{ minWidth: 160 }}>
-          <InputLabel>Category</InputLabel>
-          <Select
-            value={categoryId}
-            label="Category"
-            onChange={(e) => updateParams({ categoryId: e.target.value })}
-          >
-            <MenuItem value="">All categories</MenuItem>
-            {renderCategoryMenuItems(categories)}
-          </Select>
-        </FormControl>
-        <FormControl sx={{ minWidth: 120 }}>
-          <InputLabel>Status</InputLabel>
-          <Select
-            value={status}
-            label="Status"
-            onChange={(e) => updateParams({ status: e.target.value })}
-          >
-            <MenuItem value="Active">Active</MenuItem>
-            <MenuItem value="Inactive">Inactive</MenuItem>
-            <MenuItem value="">All</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
+      <FilterPanel
+        fields={[
+          {
+            key: "q",
+            label: "Search",
+            kind: "text",
+            placeholder: "Name, code, SKU, barcode…",
+          },
+          {
+            key: "brandId",
+            label: "Brand",
+            kind: "select",
+            allLabel: "All brands",
+            options: brands?.map((b) => ({ value: b.id, label: b.name })),
+          },
+          {
+            key: "categoryId",
+            label: "Category",
+            kind: "select",
+            allLabel: "All categories",
+            renderOptions: () => renderCategoryMenuItems(categories),
+            formatValue: (v) =>
+              categories?.find((c) => c.id === v)?.name ?? v,
+          },
+          {
+            key: "status",
+            label: "Status",
+            kind: "select",
+            allLabel: "All",
+            options: [
+              { value: "Active", label: "Active" },
+              { value: "Inactive", label: "Inactive" },
+            ],
+          },
+        ]}
+        values={{ q: searchInput, brandId, categoryId, status }}
+        onApply={(v) => updateParams(v)}
+      />
 
       {(isLoading || isError || products?.length === 0) && (
         <Box
